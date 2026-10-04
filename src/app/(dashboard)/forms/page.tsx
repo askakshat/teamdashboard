@@ -10,109 +10,99 @@ import {
   FolderOpen,
   LockKeyhole,
   Search,
-  UploadCloud,
   Loader2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import {
+  FORM_SECTIONS,
+  type FormMeta,
+  type FormSection,
+  COLOR_TOKENS,
+} from "@/lib/forms-config";
 
-const sectionsConfig = [
-  {
-    title: "Set up your team",
-    kicker: "Milestones 1–2",
-    color: "teal",
-    forms: [
-      {
-        id: "roles",
-        title: "Roles & Responsibilities",
-        detail: "Choose roles fairly and make ownership visible.",
-      },
-      {
-        id: "group-introduction",
-        title: "Group Introduction & Platform",
-        detail: "First names only, clear layout, safe public sharing.",
-      },
-    ],
-  },
-  {
-    title: "Research & create",
-    kicker: "Milestones 4–5",
-    color: "violet",
-    forms: [
-      {
-        id: "expert-interview",
-        title: "Local Expert Interview",
-        detail: "Logistics, questions, 300-word insights and media.",
-      },
-      {
-        id: "prototype-specs",
-        title: "Prototype Specs & Quality",
-        detail: "Materials, cost, production and the seven criteria.",
-      },
-    ],
-  },
-  {
-    title: "Promote & reflect",
-    kicker: "Milestones 6–8",
-    color: "amber",
-    forms: [
-      {
-        id: "marketing-plan",
-        title: "Marketing Plan · 7 Ps",
-        detail: "Product, price, place, promotion, people, process, evidence.",
-      },
-      {
-        id: "individual-reflection",
-        title: "Individual Reflection",
-        detail: "Each member writes at least 200 words in their own voice.",
-      },
-      {
-        id: "competences",
-        title: "Competences Worksheet",
-        detail: "Select 10 across at least 3 categories; group selects top 5.",
-      },
-      {
-        id: "self-assessment",
-        title: "Self-Assessment Rubric",
-        detail: "Done / no answers and student scoring before teacher review.",
-      },
-    ],
-  },
-];
+interface FormSubmissionRow {
+  id: string;
+  form_id: string;
+  status: string;
+  progress: number;
+  updated_at: string;
+}
+
+const colorClass = (color: FormSection["color"] | FormMeta["color"]) => {
+  switch (color) {
+    case "teal":
+      return "text-teal-600";
+    case "violet":
+      return "text-violet-600";
+    case "amber":
+      return "text-amber-600";
+    case "sky":
+      return "text-sky-600";
+    case "rose":
+      return "text-rose-600";
+    default:
+      return "text-slate-600";
+  }
+};
+
+const colorBg = (color: FormSection["color"] | FormMeta["color"]) => {
+  switch (color) {
+    case "teal":
+      return "bg-teal-50 text-teal-600";
+    case "violet":
+      return "bg-violet-50 text-violet-600";
+    case "amber":
+      return "bg-amber-50 text-amber-600";
+    case "sky":
+      return "bg-sky-50 text-sky-600";
+    case "rose":
+      return "bg-rose-50 text-rose-600";
+    default:
+      return "bg-slate-100 text-slate-600";
+  }
+};
 
 export default function FormsHubPage() {
   const [query, setQuery] = useState("");
-  const [submissions, setSubmissions] = useState<any>({});
+  const [submissions, setSubmissions] = useState<Record<string, FormSubmissionRow>>({});
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
   useEffect(() => {
     async function loadForms() {
-      const { data } = await supabase.from("form_submissions").select("*");
+      const { data } = await supabase
+        .from("form_submissions")
+        .select("id, form_id, status, progress, updated_at");
       if (data) {
-        const subMap = data.reduce(
+        const subMap = (data as FormSubmissionRow[]).reduce(
           (acc, sub) => {
             acc[sub.form_id] = sub;
             return acc;
           },
-          {} as any,
+          {} as Record<string, FormSubmissionRow>,
         );
         setSubmissions(subMap);
       }
       setLoading(false);
     }
     loadForms();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Map config to include submission state
-  const sections = sectionsConfig.map((section) => ({
+  type FormWithState = FormMeta & { status: string; progress: number };
+  type SectionWithState = Omit<FormSection, "forms"> & {
+    forms: FormWithState[];
+  };
+
+  const sections: SectionWithState[] = FORM_SECTIONS.map((section) => ({
     ...section,
-    forms: section.forms.map((form) => {
-      const sub = submissions[form.id] || {
-        status: "Not started",
-        progress: 0,
+    forms: section.forms.map((form): FormWithState => {
+      const sub = submissions[form.id];
+      return {
+        ...form,
+        status: sub?.status ?? "Not started",
+        progress: sub?.progress ?? 0,
       };
-      return { ...form, ...sub };
     }),
   }));
 
@@ -120,6 +110,9 @@ export default function FormsHubPage() {
   const ready = sections
     .flatMap((section) => section.forms)
     .filter((form) => form.progress === 100).length;
+  const pending = sections
+    .flatMap((section) => section.forms)
+    .filter((form) => form.status === "Pending approval").length;
 
   return (
     <div className="mx-auto max-w-[1280px] space-y-7 pb-10">
@@ -145,9 +138,17 @@ export default function FormsHubPage() {
               ready to submit
             </p>
           </div>
-          <button className="inline-flex h-11 items-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-medium text-white hover:bg-slate-800">
-            <UploadCloud className="h-4 w-4" /> Upload evidence
-          </button>
+          {pending > 0 && (
+            <Link
+              href="/admin/approval-queue"
+              className="rounded-xl border border-amber-200 bg-amber-50/60 px-4 py-2.5 text-right"
+            >
+              <p className="text-lg font-semibold text-amber-700">{pending}</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-600">
+                pending review
+              </p>
+            </Link>
+          )}
         </div>
       </div>
       <div className="flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-[0_10px_30px_-22px_rgba(15,23,42,0.25)] md:flex-row md:items-center">
@@ -179,7 +180,7 @@ export default function FormsHubPage() {
               <div className="flex items-start justify-between">
                 <div>
                   <p
-                    className={`text-[10px] font-semibold uppercase tracking-[0.16em] ${section.color === "teal" ? "text-teal-600" : section.color === "violet" ? "text-violet-600" : "text-amber-600"}`}
+                    className={`text-[10px] font-semibold uppercase tracking-[0.16em] ${colorClass(section.color)}`}
                   >
                     {section.kicker}
                   </p>
@@ -188,7 +189,7 @@ export default function FormsHubPage() {
                   </h2>
                 </div>
                 <div
-                  className={`flex h-9 w-9 items-center justify-center rounded-xl ${section.color === "teal" ? "bg-teal-50 text-teal-600" : section.color === "violet" ? "bg-violet-50 text-violet-600" : "bg-amber-50 text-amber-600"}`}
+                  className={`flex h-9 w-9 items-center justify-center rounded-xl ${colorBg(section.color)}`}
                 >
                   <ClipboardList className="h-4 w-4" />
                 </div>
@@ -200,49 +201,60 @@ export default function FormsHubPage() {
                       form.title.toLowerCase().includes(query.toLowerCase()) ||
                       form.detail.toLowerCase().includes(query.toLowerCase()),
                   )
-                  .map((form) => (
-                    <Link
-                      href={`/forms/${form.id}`}
-                      key={form.id}
-                      className="group block rounded-xl border border-slate-100 bg-slate-50/60 p-3.5 transition hover:border-slate-200 hover:bg-white hover:shadow-sm"
-                    >
-                      <div className="flex gap-3">
-                        <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-slate-400 shadow-sm">
-                          <FileText className="h-4 w-4" />
+                  .map((form) => {
+                    const tokens = COLOR_TOKENS[form.color];
+                    return (
+                      <Link
+                        href={`/forms/${form.id}`}
+                        key={form.id}
+                        className="group block rounded-xl border border-slate-100 bg-slate-50/60 p-3.5 transition hover:border-slate-200 hover:bg-white hover:shadow-sm"
+                      >
+                        <div className="flex gap-3">
+                          <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-slate-400 shadow-sm">
+                            <FileText className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-start justify-between gap-2">
+                              <h3 className="text-sm font-semibold leading-5 text-slate-800">
+                                {form.title}
+                              </h3>
+                              <ArrowUpRight className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:text-teal-600" />
+                            </div>
+                            <p className="mt-1 text-xs leading-5 text-slate-500">
+                              {form.detail}
+                            </p>
+                            <div className="mt-3 flex items-center justify-between">
+                              <span
+                                className={`inline-flex items-center gap-1 text-[10px] font-semibold ${
+                                  form.progress === 100
+                                    ? "text-teal-600"
+                                    : form.status === "Pending approval"
+                                      ? "text-amber-600"
+                                      : form.progress > 0
+                                        ? "text-amber-600"
+                                        : "text-slate-400"
+                                }`}
+                              >
+                                {form.progress === 100 && (
+                                  <CheckCircle2 className="h-3 w-3" />
+                                )}
+                                {form.status}
+                              </span>
+                              <span className="text-[10px] font-medium text-slate-400">
+                                {form.progress}%
+                              </span>
+                            </div>
+                            <div className="mt-1 h-1 rounded-full bg-slate-200">
+                              <div
+                                className={`h-1 rounded-full transition-all ${form.progress === 100 ? tokens.dot : "bg-amber-400"}`}
+                                style={{ width: `${form.progress}%` }}
+                              />
+                            </div>
+                          </div>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-start justify-between gap-2">
-                            <h3 className="text-sm font-semibold leading-5 text-slate-800">
-                              {form.title}
-                            </h3>
-                            <ArrowUpRight className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:text-teal-600" />
-                          </div>
-                          <p className="mt-1 text-xs leading-5 text-slate-500">
-                            {form.detail}
-                          </p>
-                          <div className="mt-3 flex items-center justify-between">
-                            <span
-                              className={`text-[10px] font-semibold ${form.progress === 100 ? "text-teal-600" : form.progress > 0 ? "text-amber-600" : "text-slate-400"}`}
-                            >
-                              {form.progress === 100 && (
-                                <CheckCircle2 className="mr-1 inline h-3 w-3" />
-                              )}
-                              {form.status}
-                            </span>
-                            <span className="text-[10px] font-medium text-slate-400">
-                              {form.progress}%
-                            </span>
-                          </div>
-                          <div className="mt-1 h-1 rounded-full bg-slate-200">
-                            <div
-                              className={`h-1 rounded-full ${form.progress === 100 ? "bg-teal-500" : "bg-amber-400"}`}
-                              style={{ width: `${form.progress}%` }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
+                      </Link>
+                    );
+                  })}
               </div>
             </section>
           ))}
@@ -266,21 +278,21 @@ export default function FormsHubPage() {
             </div>
           </div>
         </div>
-        <div className="rounded-2xl border border-amber-200/80 bg-amber-50/60 p-5">
-          <h3 className="text-sm font-semibold text-amber-950">
+        <Link
+          href="/forms/ai-log"
+          className="group rounded-2xl border border-rose-200/80 bg-rose-50/60 p-5 transition hover:border-rose-300 hover:bg-rose-50"
+        >
+          <h3 className="text-sm font-semibold text-rose-950">
             AI accountability · bonus
           </h3>
-          <p className="mt-1 text-xs leading-5 text-amber-800/70">
+          <p className="mt-1 text-xs leading-5 text-rose-800/70">
             If you use AI, record the tool, prompt, how you adapted it, and
             which sources you used to fact-check it.
           </p>
-          <Link
-            href="/forms/ai-log"
-            className="mt-3 inline-flex text-xs font-semibold text-amber-800 hover:text-amber-950"
-          >
+          <span className="mt-3 inline-flex text-xs font-semibold text-rose-800 group-hover:text-rose-950">
             Open AI log <ArrowUpRight className="ml-1 inline h-3.5 w-3.5" />
-          </Link>
-        </div>
+          </span>
+        </Link>
       </div>
     </div>
   );

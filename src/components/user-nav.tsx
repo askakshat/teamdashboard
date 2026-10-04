@@ -15,9 +15,9 @@ import { signOut } from "@/actions/auth";
 
 interface UserNavProps {
   user: {
-    first_name: string;
-    email: string;
-    role: string;
+    first_name?: string;
+    email?: string;
+    role?: string;
   } | null;
 }
 

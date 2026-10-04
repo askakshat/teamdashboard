@@ -2,23 +2,84 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Sparkles, ChevronDown, Bell, CircleHelp } from "lucide-react";
+import {
+  Sparkles,
+  ChevronDown,
+  Bell,
+  CircleHelp,
+  LayoutDashboard,
+  CheckSquare,
+  Lightbulb,
+  FileText,
+  Settings,
+  BookOpen,
+  type LucideIcon,
+} from "lucide-react";
 import { UserNav } from "@/components/user-nav";
 
+interface NavItem {
+  name: string;
+  href: string;
+  icon: LucideIcon;
+  badge?: string;
+}
+
+interface Profile {
+  first_name?: string;
+  email?: string;
+  role?: string;
+}
+
 interface DesktopSidebarProps {
-  primaryNavigation: any[];
-  workspaceNavigation: (role: string) => any[];
-  profile: any;
+  profile: Profile | null;
   displayName: string;
+  openTaskCount: number;
+  pendingApprovalCount: number;
+}
+
+function isActive(pathname: string, href: string): boolean {
+  if (pathname === href) return true;
+  // Treat /forms/anything as active for the /forms nav item
+  if (href === "/forms" && pathname.startsWith("/forms")) return true;
+  return false;
 }
 
 export function DesktopSidebar({
-  primaryNavigation,
-  workspaceNavigation,
   profile,
   displayName,
+  openTaskCount,
+  pendingApprovalCount,
 }: DesktopSidebarProps) {
   const pathname = usePathname();
+  const role = profile?.role || "";
+
+  const primaryNavigation: NavItem[] = [
+    { name: "Overview", href: "/overview", icon: LayoutDashboard },
+    {
+      name: "Tasks & milestones",
+      href: "/tasks",
+      icon: CheckSquare,
+      ...(openTaskCount > 0 ? { badge: String(openTaskCount) } : {}),
+    },
+    { name: "Blueprint studio", href: "/blueprint", icon: Lightbulb },
+    { name: "Forms hub", href: "/forms", icon: FileText },
+  ];
+
+  const workspaceNavigation: NavItem[] = [
+    { name: "Project rules", href: "/rules", icon: BookOpen },
+    ...(role === "leader"
+      ? [
+          {
+            name: "Approval queue",
+            href: "/admin/approval-queue",
+            icon: Settings,
+            ...(pendingApprovalCount > 0
+              ? { badge: String(pendingApprovalCount) }
+              : {}),
+          },
+        ]
+      : []),
+  ];
 
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-[252px] flex-col border-r border-slate-200/80 bg-white lg:flex">
@@ -36,7 +97,10 @@ export function DesktopSidebar({
         </div>
       </div>
       <div className="border-b border-slate-100 px-4 py-4">
-        <button className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2.5 text-left transition hover:border-slate-300">
+        <button
+          className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2.5 text-left transition hover:border-slate-300"
+          type="button"
+        >
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-100 text-xs font-bold text-teal-700">
             GL
           </div>
@@ -55,22 +119,22 @@ export function DesktopSidebar({
         </p>
         <ul className="mt-3 space-y-1">
           {primaryNavigation.map((item) => {
-            const isActive = pathname === item.href as string;
+            const active = isActive(pathname, item.href);
             return (
-              <li key={item.name as string}>
+              <li key={item.name}>
                 <Link
-                  href={item.href as string}
-                  className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition ${isActive ? "bg-teal-50/70 text-teal-800" : "text-slate-500 hover:bg-slate-50 hover:text-slate-950"}`}
+                  href={item.href}
+                  className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition ${active ? "bg-teal-50/70 text-teal-800" : "text-slate-500 hover:bg-slate-50 hover:text-slate-950"}`}
                 >
-                        <item.icon
-                    className={`h-[17px] w-[17px] ${isActive ? "text-teal-600" : "text-slate-400 group-hover:text-slate-600"}`}
+                  <item.icon
+                    className={`h-[17px] w-[17px] ${active ? "text-teal-600" : "text-slate-400 group-hover:text-slate-600"}`}
                   />
-                  <span className="flex-1">{item.name as string}</span>
-                  {item.badge as string && (
+                  <span className="flex-1">{item.name}</span>
+                  {item.badge && (
                     <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${isActive ? "bg-white text-teal-700" : "bg-slate-100 text-slate-400"}`}
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${active ? "bg-white text-teal-700" : "bg-slate-100 text-slate-400"}`}
                     >
-                      {item.badge as string}
+                      {item.badge}
                     </span>
                   )}
                 </Link>
@@ -82,21 +146,21 @@ export function DesktopSidebar({
           Manage
         </p>
         <ul className="mt-3 space-y-1">
-          {workspaceNavigation(profile?.role || "").map((item) => {
-            const isActive = pathname === item.href as string;
+          {workspaceNavigation.map((item) => {
+            const active = isActive(pathname, item.href);
             return (
-              <li key={item.name as string}>
+              <li key={item.name}>
                 <Link
-                  href={item.href as string}
-                  className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition ${isActive ? "bg-teal-50/70 text-teal-800" : "text-slate-500 hover:bg-slate-50 hover:text-slate-950"}`}
+                  href={item.href}
+                  className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition ${active ? "bg-teal-50/70 text-teal-800" : "text-slate-500 hover:bg-slate-50 hover:text-slate-950"}`}
                 >
-                        <item.icon
-                    className={`h-[17px] w-[17px] ${isActive ? "text-teal-600" : "text-slate-400 group-hover:text-slate-600"}`}
+                  <item.icon
+                    className={`h-[17px] w-[17px] ${active ? "text-teal-600" : "text-slate-400 group-hover:text-slate-600"}`}
                   />
-                  <span className="flex-1">{item.name as string}</span>
-                  {item.badge as string && (
+                  <span className="flex-1">{item.name}</span>
+                  {item.badge && (
                     <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-600">
-                      {item.badge as string}
+                      {item.badge}
                     </span>
                   )}
                 </Link>

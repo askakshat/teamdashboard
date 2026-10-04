@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import {
   CalendarDays,
   Check,
@@ -12,8 +12,27 @@ import {
   UserRound,
   Loader2,
   Trash2,
+  Pencil,
+  X,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { useToast } from "@/components/toast";
+import { MILESTONES, DEFAULT_TASKS } from "@/lib/forms-config";
+
+interface TaskRow {
+  id: string;
+  title: string;
+  status: string;
+  priority: string;
+  milestone: number;
+  due_date: string | null;
+  owner_id: string | null;
+}
+
+interface ProfileRow {
+  id: string;
+  first_name: string;
+}
 
 const columns = [
   { id: "todo", title: "To do", tone: "bg-slate-50", dot: "bg-slate-300" },
@@ -51,29 +70,42 @@ function getColorForUser(userId: string) {
 }
 
 export default function TasksPage() {
-  const [tasks, setTasks] = useState<any[]>([]);
-  const [profiles, setProfiles] = useState<any[]>([]);
+  const { toast } = useToast();
+  const [tasks, setTasks] = useState<TaskRow[]>([]);
+  const [profiles, setProfiles] = useState<ProfileRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [owner, setOwner] = useState("All owners");
   const [milestone, setMilestone] = useState("All milestones");
   const [dragged, setDragged] = useState<string | null>(null);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [showSeedPrompt, setShowSeedPrompt] = useState(false);
   const supabase = createClient();
 
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    const [{ data: tasksData }, { data: profilesData }] = await Promise.all([
+      supabase.from("tasks").select("*"),
+      supabase.from("profiles").select("id, first_name"),
+    ]);
+    setTasks((tasksData ?? []) as TaskRow[]);
+    setProfiles((profilesData ?? []) as ProfileRow[]);
+    setLoading(false);
+  }, [supabase]);
+
   useEffect(() => {
-    async function loadData() {
-      setLoading(true);
-      const [{ data: tasksData }, { data: profilesData }] = await Promise.all([
-        supabase.from("tasks").select("*"),
-        supabase.from("profiles").select("id, first_name"),
-      ]);
-      if (tasksData) setTasks(tasksData);
-      if (profilesData) setProfiles(profilesData);
-      setLoading(false);
-    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadData]);
+
+  // After load, if there are zero tasks, prompt to seed with the official EUMIND milestones
+  useEffect(() => {
+    if (!loading && tasks.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setShowSeedPrompt(true);
+    }
+  }, [loading, tasks.length]);
 
   async function moveTask(status: string) {
     if (!dragged) return;
@@ -89,20 +121,37 @@ export default function TasksPage() {
       .update({ status })
       .eq("id", dragged);
     if (error) {
-      // Revert on error - minimal implementation for brevity
-      console.error("Failed to update status", error);
+      toast({
+        title: "Could not move task",
+        description: "Reverting to the previous column.",
+        variant: "error",
+      });
+      loadData();
+    } else {
+      const col = columns.find((c) => c.id === status);
+      toast({
+        title: `Moved to ${col?.title ?? status}`,
+        variant: "success",
+      });
     }
     setDragged(null);
   }
 
   async function deleteTask(id: string) {
+    const previous = tasks;
     setTasks((current) => current.filter((t) => t.id !== id));
-    await supabase.from("tasks").delete().eq("id", id);
+    const { error } = await supabase.from("tasks").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Could not delete task", variant: "error" });
+      setTasks(previous);
+    } else {
+      toast({ title: "Task deleted", variant: "info" });
+    }
   }
 
   async function addTask() {
     const newTask = {
-      title: "New Task",
+      title: "New task",
       status: "todo",
       milestone: 1,
       due_date: "TBD",
@@ -115,7 +164,57 @@ export default function TasksPage() {
       .select()
       .single();
     if (data && !error) {
-      setTasks((current) => [...current, data]);
+      setTasks((current) => [...current, data as TaskRow]);
+      setEditing((data as TaskRow).id);
+      setEditTitle("New task");
+    } else {
+      toast({ title: "Could not create task", variant: "error" });
+    }
+  }
+
+  async function saveTitle(id: string) {
+    const title = editTitle.trim();
+    if (!title) {
+      setEditing(null);
+      return;
+    }
+    setTasks((current) =>
+      current.map((t) => (t.id === id ? { ...t, title } : t)),
+    );
+    setEditing(null);
+    await supabase.from("tasks").update({ title }).eq("id", id);
+  }
+
+  async function assignOwner(taskId: string, ownerId: string | null) {
+    setTasks((current) =>
+      current.map((t) => (t.id === taskId ? { ...t, owner_id: ownerId } : t)),
+    );
+    await supabase.from("tasks").update({ owner_id: ownerId }).eq("id", taskId);
+  }
+
+  async function setPriority(taskId: string, priority: string) {
+    setTasks((current) =>
+      current.map((t) => (t.id === taskId ? { ...t, priority } : t)),
+    );
+    await supabase.from("tasks").update({ priority }).eq("id", taskId);
+  }
+
+  async function seedDefaultTasks() {
+    setShowSeedPrompt(false);
+    const rows = DEFAULT_TASKS.map((t) => ({ ...t }));
+    const { data, error } = await supabase
+      .from("tasks")
+      .insert(rows)
+      .select();
+    if (data && !error) {
+      setTasks((current) => [...current, ...(data as TaskRow[])]);
+      toast({
+        title: "Tasks seeded",
+        description: "10 milestone-based tasks added. Assign owners to begin.",
+        variant: "success",
+      });
+    } else {
+      toast({ title: "Could not seed tasks", variant: "error" });
     }
   }
 
@@ -133,7 +232,7 @@ export default function TasksPage() {
         ...task,
         ownerName,
         initials,
-        color: getColorForUser(task.owner_id),
+        color: getColorForUser(task.owner_id ?? ""),
       };
     });
   }, [tasks, profiles]);
@@ -182,6 +281,38 @@ export default function TasksPage() {
           <CirclePlus className="h-4 w-4" /> New task
         </button>
       </div>
+
+      {showSeedPrompt && (
+        <div className="flex flex-col gap-3 rounded-2xl border border-violet-200 bg-violet-50/60 p-5 sm:flex-row sm:items-center">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+            <CirclePlus className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-violet-950">
+              Start with the official EUMIND milestones?
+            </p>
+            <p className="mt-0.5 text-xs text-violet-800/70">
+              We can seed 10 ready-made tasks based on the competition
+              timeline. You can edit, assign and delete them afterwards.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowSeedPrompt(false)}
+              className="inline-flex h-9 items-center rounded-xl border border-violet-200 bg-white px-3 text-xs font-semibold text-violet-700 hover:bg-violet-50"
+            >
+              No, start empty
+            </button>
+            <button
+              onClick={seedDefaultTasks}
+              className="inline-flex h-9 items-center gap-2 rounded-xl bg-violet-600 px-3 text-xs font-semibold text-white hover:bg-violet-700"
+            >
+              <Check className="h-3.5 w-3.5" /> Seed 10 tasks
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-[0_10px_30px_-22px_rgba(15,23,42,0.25)] md:flex-row">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -211,9 +342,9 @@ export default function TasksPage() {
           className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-600 outline-none"
         >
           <option>All milestones</option>
-          {Array.from({ length: 10 }, (_, index) => (
-            <option key={index} value={String(index + 1)}>
-              Milestone {index + 1}
+          {MILESTONES.map((m) => (
+            <option key={m.number} value={String(m.number)}>
+              M{m.number} · {m.title}
             </option>
           ))}
         </select>
@@ -294,32 +425,111 @@ export default function TasksPage() {
                               M{task.milestone}
                             </span>
                             <div className="flex items-center gap-2">
+                              <select
+                                value={task.priority}
+                                onChange={(e) => {
+                                  e.stopPropagation();
+                                  setPriority(task.id, e.target.value);
+                                }}
+                                className="rounded-full border-0 bg-transparent text-[10px] font-semibold text-slate-500 outline-none hover:bg-slate-50"
+                                title="Set priority"
+                              >
+                                <option value="Low">Low</option>
+                                <option value="Medium">Medium</option>
+                                <option value="High">High</option>
+                              </select>
                               {task.priority === "High" && (
                                 <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
                                   High
                                 </span>
                               )}
                               <button
+                                onClick={() => {
+                                  setEditing(task.id);
+                                  setEditTitle(task.title);
+                                }}
+                                className="text-slate-300 opacity-0 transition hover:text-slate-700 group-hover:opacity-100"
+                                aria-label="Edit title"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </button>
+                              <button
                                 onClick={() => deleteTask(task.id)}
-                                className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition"
+                                className="text-slate-300 opacity-0 transition hover:text-red-500 group-hover:opacity-100"
+                                aria-label="Delete task"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </button>
                             </div>
                           </div>
-                          <h3 className="mt-2 text-sm font-semibold leading-5 text-slate-800">
-                            {task.title}
-                          </h3>
+                          {editing === task.id ? (
+                            <div className="mt-2 flex items-center gap-1">
+                              <input
+                                autoFocus
+                                value={editTitle}
+                                onChange={(e) => setEditTitle(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") saveTitle(task.id);
+                                  if (e.key === "Escape") setEditing(null);
+                                }}
+                                className="h-7 w-full rounded-md border border-teal-400 bg-white px-2 text-sm font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-teal-400"
+                              />
+                              <button
+                                onClick={() => saveTitle(task.id)}
+                                className="rounded-md bg-teal-600 p-1 text-white hover:bg-teal-700"
+                              >
+                                <Check className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                onClick={() => setEditing(null)}
+                                className="rounded-md bg-slate-100 p-1 text-slate-500 hover:bg-slate-200"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <h3 className="mt-2 text-sm font-semibold leading-5 text-slate-800">
+                              {task.title}
+                            </h3>
+                          )}
                           <div className="mt-4 flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              <div
-                                className={`flex h-6 w-6 items-center justify-center rounded-full text-[9px] font-bold ${task.color}`}
+                              <select
+                                value={task.owner_id ?? ""}
+                                onChange={(e) => {
+                                  const v = e.target.value;
+                                  assignOwner(task.id, v ? v : null);
+                                }}
+                                className={`flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-[9px] font-bold appearance-none border-0 bg-transparent ${task.color}`}
+                                title="Assign owner"
+                                style={{
+                                  WebkitAppearance: "none",
+                                  MozAppearance: "none",
+                                }}
                               >
-                                {task.initials}
-                              </div>
-                              <span className="text-xs text-slate-500">
-                                {task.ownerName}
-                              </span>
+                                <option value="">--</option>
+                                {profiles.map((p) => (
+                                  <option key={p.id} value={p.id}>
+                                    {p.first_name.substring(0, 2).toUpperCase()}
+                                  </option>
+                                ))}
+                              </select>
+                              <select
+                                value={task.owner_id ?? ""}
+                                onChange={(e) => {
+                                  const v = e.target.value;
+                                  assignOwner(task.id, v ? v : null);
+                                }}
+                                className="cursor-pointer border-0 bg-transparent text-xs text-slate-500 outline-none hover:text-slate-800"
+                                title="Assign owner"
+                              >
+                                <option value="">Unassigned</option>
+                                {profiles.map((p) => (
+                                  <option key={p.id} value={p.id}>
+                                    {p.first_name}
+                                  </option>
+                                ))}
+                              </select>
                             </div>
                             <span className="text-[11px] font-medium text-slate-400">
                               {task.due_date || "TBD"}
@@ -347,8 +557,8 @@ export default function TasksPage() {
           Make the work visible
         </p>
         <p className="mt-1 text-xs text-slate-400">
-          Assign each task to a person, then drag it as the idea moves from
-          rough to real.
+          Click a task card to edit its title, owner and priority. Drag between
+          columns as the idea moves from rough to real.
         </p>
       </div>
     </div>

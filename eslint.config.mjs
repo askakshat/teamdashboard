@@ -12,6 +12,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Workspace directories that are not part of the user's project.
+    "skills/**",
+    "scripts/**",
+    "download/**",
+    "upload/**",
+    "node_modules/**",
   ]),
 ]);
 
