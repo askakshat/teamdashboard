@@ -13,12 +13,14 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useProfile, useIsLeader } from "@/components/profile-provider";
+import { ProjectRoleBadge } from "@/components/project-role-editor";
 
 interface ProfileRow {
   id: string;
   first_name: string;
   email: string;
   role: string;
+  project_role: string | null;
   created_at: string;
 }
 
@@ -65,7 +67,10 @@ export default function TeamPage() {
 
   const loadData = useCallback(async () => {
     const [{ data: profilesData }, { data: tasksData }] = await Promise.all([
-      supabase.from("profiles").select("*").order("first_name", { ascending: true }),
+      supabase
+        .from("profiles")
+        .select("id, first_name, email, role, project_role, created_at")
+        .order("first_name", { ascending: true }),
       supabase.from("tasks").select("id, title, status, owner_id, milestone, priority"),
     ]);
     setMembers((profilesData ?? []) as ProfileRow[]);
@@ -190,6 +195,11 @@ export default function TeamPage() {
                   </div>
                 </div>
                 <ArrowUpRight className="h-4 w-4 text-slate-300 transition group-hover:text-teal-600" />
+              </div>
+
+              {/* Project role badge (from the official EUMIND guidelines) */}
+              <div className="mt-3">
+                <ProjectRoleBadge projectRoleId={member.project_role} size="sm" />
               </div>
 
               {isCurrentUser && (

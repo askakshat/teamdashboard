@@ -6,7 +6,6 @@ import { ProfileProvider } from "@/components/profile-provider";
 import { NotificationsDropdown } from "@/components/notifications-dropdown";
 import { SearchPalette } from "@/components/search-palette";
 import { SearchButton } from "@/components/search-button";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { getUserProfile } from "@/actions/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { Profile } from "@/lib/roles";
@@ -94,7 +93,6 @@ export default async function DashboardLayout({
             <div className="ml-auto flex items-center gap-2">
               <SearchButton />
               <NotificationsDropdown />
-              <ThemeToggle />
               <div className="h-5 w-px bg-slate-200" />
               <span className="hidden text-xs font-medium text-slate-500 sm:inline">
                 {monthLabel} · Creative Entrepreneur 2026–27

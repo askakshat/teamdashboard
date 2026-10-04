@@ -16,12 +16,15 @@ import { createClient } from "@/lib/supabase/client";
 import { useProfile, useIsLeader } from "@/components/profile-provider";
 import { useParams } from "next/navigation";
 import { MILESTONES } from "@/lib/forms-config";
+import { ProjectRoleEditor } from "@/components/project-role-editor";
+import { getProjectRole } from "@/lib/project-roles";
 
 interface ProfileRow {
   id: string;
   first_name: string;
   email: string;
   role: string;
+  project_role: string | null;
   created_at: string;
 }
 
@@ -181,6 +184,40 @@ export default function MemberProfilePage() {
                 Role: {member.role.replace("_", " ")}
               </span>
             </div>
+
+            {/* Project role badge + leader-only editor */}
+            <div className="mt-3">
+              <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">
+                Project role
+              </p>
+              <ProjectRoleEditor
+                memberId={member.id}
+                memberName={member.first_name}
+                currentRoleId={member.project_role}
+                canEdit={isLeader && !isCurrentUser}
+                onUpdated={() => loadData()}
+              />
+            </div>
+            {/* Show role responsibilities if a project role is assigned */}
+            {member.project_role && (() => {
+              const role = getProjectRole(member.project_role);
+              if (!role) return null;
+              return (
+                <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3">
+                  <p className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                    <span>{role.icon}</span> {role.name} — responsibilities
+                  </p>
+                  <ul className="mt-2 space-y-1">
+                    {role.responsibilities.map((r, i) => (
+                      <li key={i} className="flex items-start gap-1.5 text-[11px] leading-5 text-slate-600">
+                        <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-slate-400" />
+                        {r}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })()}
           </div>
           <div className="sm:text-right">
             <p className="text-3xl font-bold text-slate-950">{completionRate}%</p>
