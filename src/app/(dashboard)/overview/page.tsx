@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import {
   ArrowUpRight,
@@ -9,7 +9,6 @@ import {
   CheckCircle2,
   ChevronRight,
   CircleAlert,
-  Clock3,
   FileCheck2,
   Filter,
   Flag,
@@ -17,7 +16,6 @@ import {
   MoreHorizontal,
   Plus,
   Send,
-  Sparkles,
   Users,
 } from "lucide-react"
 
@@ -52,19 +50,7 @@ function ProgressRing({ value }: { value: number }) {
 }
 
 export default function OverviewPage() {
-  const [now, setNow] = useState(new Date())
   const [showAllTasks, setShowAllTasks] = useState(false)
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setNow(new Date()), 1000)
-    return () => window.clearInterval(timer)
-  }, [])
-
-  const clocks = useMemo(() => {
-    const india = new Intl.DateTimeFormat("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", hour12: false }).format(now)
-    const netherlands = new Intl.DateTimeFormat("en-NL", { timeZone: "Europe/Amsterdam", hour: "2-digit", minute: "2-digit", hour12: false }).format(now)
-    return { india, netherlands }
-  }, [now])
 
   return (
     <div className="mx-auto max-w-[1500px] space-y-7 pb-10">
@@ -100,10 +86,10 @@ export default function OverviewPage() {
       <section className="grid gap-5 xl:grid-cols-[1.35fr_0.65fr]">
         <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_10px_30px_-22px_rgba(15,23,42,0.25)]">
           <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-600">Momentum</p><h2 className="mt-1 text-lg font-semibold tracking-tight text-slate-900">Project journey</h2></div><Link href="/tasks" className="text-xs font-semibold text-slate-500 hover:text-slate-900">View roadmap <ArrowUpRight className="ml-1 inline h-3.5 w-3.5" /></Link></div>
-          <div className="grid gap-6 p-6 md:grid-cols-[auto_1fr] md:items-center"><ProgressRing value={28} /><div className="space-y-4"><div className="flex items-center justify-between text-sm"><span className="font-medium text-slate-800">Milestone 3 of 10</span><span className="text-slate-400">Ideation &amp; blueprint</span></div><div className="h-2 rounded-full bg-slate-100"><div className="h-2 w-[28%] rounded-full bg-teal-500" /></div><div className="flex flex-wrap gap-2 pt-1"><span className="rounded-full bg-teal-50 px-2.5 py-1 text-xs font-medium text-teal-700"><Check className="mr-1 inline h-3 w-3" /> Platform ready</span><span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700"><Clock3 className="mr-1 inline h-3 w-3" /> Prototype in progress</span></div><p className="text-sm leading-6 text-slate-500">You&apos;re 2 days ahead of the suggested EUMIND timeline. Lock the prototype direction by <span className="font-semibold text-slate-700">Friday, 16 October</span>.</p></div></div>
+          <div className="grid gap-6 p-6 md:grid-cols-[auto_1fr] md:items-center"><ProgressRing value={28} /><div className="space-y-4"><div className="flex items-center justify-between text-sm"><span className="font-medium text-slate-800">Milestone 3 of 10</span><span className="text-slate-400">Ideation &amp; blueprint</span></div><div className="h-2 rounded-full bg-slate-100"><div className="h-2 w-[28%] rounded-full bg-teal-500" /></div><div className="flex flex-wrap gap-2 pt-1"><span className="rounded-full bg-teal-50 px-2.5 py-1 text-xs font-medium text-teal-700"><Check className="mr-1 inline h-3 w-3" /> Platform ready</span><span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700"><CircleAlert className="mr-1 inline h-3 w-3" /> Prototype direction needed</span></div><p className="text-sm leading-6 text-slate-500">You&apos;re 2 days ahead of the suggested EUMIND timeline. Lock the prototype direction by <span className="font-semibold text-slate-700">Friday, 16 October</span>.</p></div></div>
           <div className="grid grid-cols-5 border-t border-slate-100 bg-slate-50/60 px-6 py-4">{["Platform", "Roles", "Blueprint", "Prototype", "Launch"].map((label, index) => <div key={label} className="relative text-center"><div className={`mx-auto h-2.5 w-2.5 rounded-full ${index < 2 ? "bg-teal-500" : index === 2 ? "bg-teal-200 ring-4 ring-teal-50" : "bg-slate-200"}`} /><p className={`mt-2 text-[10px] font-medium ${index <= 2 ? "text-slate-700" : "text-slate-400"}`}>{label}</p></div>)}</div>
         </div>
-        <div className="rounded-2xl border border-slate-200/80 bg-slate-950 p-6 text-white shadow-[0_15px_35px_-22px_rgba(15,23,42,0.65)]"><div className="flex items-start justify-between"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-300">Cross-border sync</p><h2 className="mt-1 text-lg font-semibold">Best time to meet</h2></div><Sparkles className="h-5 w-5 text-teal-300" /></div><div className="mt-8 space-y-5"><div className="flex items-end justify-between"><div><p className="text-xs text-slate-400">India · IST</p><p className="mt-1 text-3xl font-light tracking-tight">{clocks.india}</p></div><span className="mb-1 rounded-full bg-teal-400/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-teal-300">Live</span></div><div className="h-px bg-white/10" /><div className="flex items-end justify-between"><div><p className="text-xs text-slate-400">Netherlands · CET</p><p className="mt-1 text-3xl font-light tracking-tight">{clocks.netherlands}</p></div><Clock3 className="mb-1 h-4 w-4 text-slate-500" /></div></div><div className="mt-8 rounded-xl border border-teal-400/20 bg-teal-400/10 p-3 text-xs leading-5 text-teal-100"><span className="font-semibold text-teal-300">Overlap window</span><br />13:00–15:00 IST · 08:30–10:30 CET</div></div>
+        <div className="rounded-2xl border border-slate-200/80 bg-slate-950 p-6 text-white shadow-[0_15px_35px_-22px_rgba(15,23,42,0.65)]"><div className="flex items-start justify-between"><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-300">Project guardrails</p><h2 className="mt-1 text-lg font-semibold">Keep the evidence clean</h2></div><CircleAlert className="h-5 w-5 text-amber-300" /></div><div className="mt-6 space-y-3"><div className="rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs font-semibold text-white">Public sharing</p><p className="mt-1 text-xs leading-5 text-slate-400">First names only. No surnames, home addresses, emails or phone numbers.</p></div><div className="rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs font-semibold text-white">Prototype proof</p><p className="mt-1 text-xs leading-5 text-slate-400">Plan for at least 6 production photos or a video up to 3 minutes.</p></div><div className="rounded-xl border border-white/10 bg-white/5 p-3"><p className="text-xs font-semibold text-white">Responsible AI</p><p className="mt-1 text-xs leading-5 text-slate-400">Record prompts, adaptations and fact-checking in the AI accountability log.</p></div></div><Link href="/rules" className="mt-5 inline-flex items-center gap-1 text-xs font-semibold text-amber-200 hover:text-white">Open all project rules <ArrowUpRight className="h-3.5 w-3.5" /></Link></div>
       </section>
 
       <section className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
