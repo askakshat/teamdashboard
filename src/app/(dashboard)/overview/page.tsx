@@ -25,6 +25,7 @@ import {
   ALL_FORMS,
   COLOR_TOKENS,
 } from "@/lib/forms-config";
+import { TeamChat } from "@/components/team-chat";
 
 interface TaskRow {
   id: string;
@@ -569,71 +570,7 @@ export default function OverviewPage() {
             Open task board <ArrowUpRight className="ml-1 inline h-3.5 w-3.5" />
           </Link>
         </div>
-        <div className="flex min-h-[300px] flex-col rounded-2xl border border-slate-200/80 bg-white shadow-[0_10px_30px_-22px_rgba(15,23,42,0.25)]">
-          <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-600">
-                Team feed
-              </p>
-              <h2 className="mt-1 text-lg font-semibold tracking-tight text-slate-900">
-                Recent activity
-              </h2>
-            </div>
-            <TrendingUp className="h-4 w-4 text-slate-300" />
-          </div>
-          <div className="flex-1 overflow-y-auto p-4">
-            {activities.length === 0 ? (
-              <div className="flex h-full items-center justify-center p-6 text-center">
-                <div>
-                  <MessageCircle className="mx-auto h-7 w-7 text-slate-300" />
-                  <p className="mt-2 text-sm font-medium text-slate-500">
-                    No recent activity. Start by adding a task or idea.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <ul className="space-y-3">
-                {activities.map((item) => {
-                  const tokens = COLOR_TOKENS[item.accent];
-                  return (
-                    <li key={item.id} className="flex items-start gap-3">
-                      <span
-                        className={`mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${tokens.bg} ${tokens.text}`}
-                      >
-                        <Clock className="h-3.5 w-3.5" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold leading-5 text-slate-800">
-                          {item.title}
-                        </p>
-                        <p className="text-[11px] text-slate-500">{item.detail}</p>
-                        <p className="mt-0.5 text-[10px] text-slate-400">
-                          {timeAgo(item.timestamp)}
-                        </p>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
-          <div className="mx-4 mb-4 flex items-center gap-2 rounded-xl border border-dashed border-slate-200 bg-slate-50/60 p-2">
-            <input
-              value={teamUpdate}
-              onChange={(e) => setTeamUpdate(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && postUpdate()}
-              placeholder="Share a quick update with the team…"
-              className="h-9 flex-1 bg-transparent px-2 text-sm text-slate-700 outline-none placeholder:text-slate-400"
-            />
-            <button
-              onClick={postUpdate}
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-950 text-white transition hover:bg-slate-800"
-              aria-label="Post update"
-            >
-              <Send className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        </div>
+        <TeamChat />
       </section>
 
       {pendingSubs > 0 && (
