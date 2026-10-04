@@ -85,6 +85,15 @@ export default function OverviewPage() {
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
   const [teamUpdate, setTeamUpdate] = useState("");
   const [activities, setActivities] = useState<ActivityItem[]>([]);
+  const [announcements, setAnnouncements] = useState<
+    Array<{
+      id: string;
+      title: string;
+      body: string;
+      category: string;
+      created_at: string;
+    }>
+  >([]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -93,6 +102,7 @@ export default function OverviewPage() {
       { data: subData },
       { data: profilesData },
       { data: ideasData },
+      { data: announcementsData },
     ] = await Promise.all([
       supabase.from("tasks").select("*"),
       supabase.from("form_submissions").select("*"),
@@ -102,6 +112,12 @@ export default function OverviewPage() {
         .select("id, title, created_at")
         .order("created_at", { ascending: false })
         .limit(5),
+      supabase
+        .from("announcements")
+        .select("id, title, body, category, created_at")
+        .eq("is_pinned", true)
+        .order("created_at", { ascending: false })
+        .limit(3),
     ]);
 
     const safeTasks = (tasksData ?? []) as TaskRow[];
@@ -110,6 +126,7 @@ export default function OverviewPage() {
     setTasks(safeTasks);
     setSubmissions(safeSubs);
     setProfiles(safeProfiles);
+    setAnnouncements((announcementsData ?? []) as typeof announcements);
 
     // Build a unified activity feed
     const items: ActivityItem[] = [];
@@ -255,6 +272,52 @@ export default function OverviewPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
+      {/* Pinned announcements */}
+      {announcements.length > 0 && (
+        <section className="space-y-2">
+          {announcements.map((a) => {
+            const catStyle =
+              a.category === "deadline"
+                ? "border-amber-200 bg-amber-50/60 text-amber-900"
+                : a.category === "alert"
+                  ? "border-red-200 bg-red-50/60 text-red-900"
+                  : a.category === "celebration"
+                    ? "border-teal-200 bg-teal-50/60 text-teal-900"
+                    : a.category === "milestone"
+                      ? "border-violet-200 bg-violet-50/60 text-violet-900"
+                      : "border-slate-200 bg-slate-50/60 text-slate-900";
+            const icon =
+              a.category === "deadline"
+                ? "⏰"
+                : a.category === "alert"
+                  ? "⚠️"
+                  : a.category === "celebration"
+                    ? "🎉"
+                    : a.category === "milestone"
+                      ? "🎯"
+                      : "📢";
+            return (
+              <div
+                key={a.id}
+                className={`flex items-start gap-3 rounded-2xl border p-4 ${catStyle}`}
+              >
+                <span className="text-lg">{icon}</span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold">{a.title}</p>
+                  <p className="mt-0.5 text-xs leading-5 opacity-80">{a.body}</p>
+                </div>
+                <span className="shrink-0 text-[10px] opacity-60">
+                  {new Date(a.created_at).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </span>
+              </div>
+            );
+          })}
+        </section>
+      )}
+
       <section className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900">

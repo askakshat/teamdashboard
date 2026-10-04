@@ -149,6 +149,12 @@ export default function FormsHubPage() {
               </p>
             </Link>
           )}
+          <Link
+            href="/forms/prototype-specs"
+            className="inline-flex h-11 items-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-medium text-white hover:bg-slate-800"
+          >
+            <FileText className="h-4 w-4" /> Add evidence
+          </Link>
         </div>
       </div>
       <div className="flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-[0_10px_30px_-22px_rgba(15,23,42,0.25)] md:flex-row md:items-center">

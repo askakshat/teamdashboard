@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import {
   Sparkles,
   ChevronDown,
-  Bell,
   CircleHelp,
   LayoutDashboard,
   CheckSquare,
@@ -13,9 +12,13 @@ import {
   FileText,
   Settings,
   BookOpen,
+  Users,
+  Megaphone,
+  StickyNote,
   type LucideIcon,
 } from "lucide-react";
 import { UserNav } from "@/components/user-nav";
+import { useProfile, useIsLeader } from "@/components/profile-provider";
 
 interface NavItem {
   name: string;
@@ -24,34 +27,30 @@ interface NavItem {
   badge?: string;
 }
 
-interface Profile {
-  first_name?: string;
-  email?: string;
-  role?: string;
-}
-
-interface DesktopSidebarProps {
-  profile: Profile | null;
-  displayName: string;
-  openTaskCount: number;
-  pendingApprovalCount: number;
-}
-
 function isActive(pathname: string, href: string): boolean {
   if (pathname === href) return true;
   // Treat /forms/anything as active for the /forms nav item
   if (href === "/forms" && pathname.startsWith("/forms")) return true;
+  // Treat /team/anything as active for /team
+  if (href === "/team" && pathname.startsWith("/team")) return true;
   return false;
 }
 
+interface DesktopSidebarProps {
+  openTaskCount: number;
+  pendingApprovalCount: number;
+  unreadNotifications: number;
+}
+
 export function DesktopSidebar({
-  profile,
-  displayName,
   openTaskCount,
   pendingApprovalCount,
+  unreadNotifications,
 }: DesktopSidebarProps) {
   const pathname = usePathname();
-  const role = profile?.role || "";
+  const profile = useProfile();
+  const isLeader = useIsLeader();
+  const displayName = profile?.first_name || "Team Member";
 
   const primaryNavigation: NavItem[] = [
     { name: "Overview", href: "/overview", icon: LayoutDashboard },
@@ -63,11 +62,12 @@ export function DesktopSidebar({
     },
     { name: "Blueprint studio", href: "/blueprint", icon: Lightbulb },
     { name: "Forms hub", href: "/forms", icon: FileText },
+    { name: "Team", href: "/team", icon: Users },
   ];
 
   const workspaceNavigation: NavItem[] = [
     { name: "Project rules", href: "/rules", icon: BookOpen },
-    ...(role === "leader"
+    ...(isLeader
       ? [
           {
             name: "Approval queue",
@@ -76,6 +76,16 @@ export function DesktopSidebar({
             ...(pendingApprovalCount > 0
               ? { badge: String(pendingApprovalCount) }
               : {}),
+          },
+          {
+            name: "Announcements",
+            href: "/admin/announcements",
+            icon: Megaphone,
+          },
+          {
+            name: "Private notes",
+            href: "/admin/private-notes",
+            icon: StickyNote,
           },
         ]
       : []),
@@ -143,7 +153,7 @@ export function DesktopSidebar({
           })}
         </ul>
         <p className="mt-8 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-          Manage
+          {isLeader ? "Manage" : "Resources"}
         </p>
         <ul className="mt-3 space-y-1">
           {workspaceNavigation.map((item) => {
@@ -182,7 +192,11 @@ export function DesktopSidebar({
               {profile?.role?.replace("_", " ") || "team member"}
             </p>
           </div>
-          <Bell className="h-4 w-4 text-slate-400" />
+          {unreadNotifications > 0 && (
+            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white">
+              {unreadNotifications}
+            </span>
+          )}
         </div>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-slate-400">

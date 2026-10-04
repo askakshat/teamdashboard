@@ -233,7 +233,17 @@ export default function BlueprintPage() {
                 ? `Saved ${canvasSavedAt}`
                 : "Save rough work"}
           </button>
-          <button className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-medium text-white hover:bg-slate-800">
+          <button
+            onClick={() => {
+              const url = window.prompt("Paste an image URL for your sketch:");
+              if (url && url.trim()) {
+                updateCanvas("sketch", (canvas.sketch ?? "") + (canvas.sketch ? "\n\n" : "") + `[Sketch: ${url.trim()}]`);
+                toast({ title: "Sketch link added to canvas", variant: "success" });
+              }
+            }}
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-medium text-white hover:bg-slate-800"
+            type="button"
+          >
             <ImagePlus className="h-4 w-4" /> Add sketch
           </button>
         </div>
