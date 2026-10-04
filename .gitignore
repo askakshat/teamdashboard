@@ -39,3 +39,7 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
+# Don't commit binary archives or alternative lockfiles
+bun.lock
+download/*.zip
