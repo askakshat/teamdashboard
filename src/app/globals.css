@@ -90,5 +90,25 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "cv11", "ss01";
   }
+}
+
+::selection {
+  background: oklch(0.91 0.08 175);
+  color: oklch(0.25 0.08 175);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: oklch(0.85 0.015 255);
+  border-radius: 999px;
 }
