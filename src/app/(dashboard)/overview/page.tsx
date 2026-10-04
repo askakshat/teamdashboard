@@ -8,23 +8,15 @@ import {
   CheckCircle2,
   ChevronRight,
   CircleAlert,
-  Clock,
   FileCheck2,
   Flag,
   Loader2,
-  MessageCircle,
   Plus,
-  Send,
   Target,
-  TrendingUp,
   Users,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import {
-  MILESTONES,
-  ALL_FORMS,
-  COLOR_TOKENS,
-} from "@/lib/forms-config";
+import { MILESTONES } from "@/lib/forms-config";
 import { TeamChat } from "@/components/team-chat";
 
 interface TaskRow {
@@ -50,15 +42,6 @@ interface ProfileRow {
   first_name: string;
 }
 
-interface ActivityItem {
-  id: string;
-  type: "task_done" | "form_updated" | "form_submitted" | "idea_added" | "milestone";
-  title: string;
-  detail: string;
-  timestamp: string;
-  accent: "teal" | "amber" | "violet" | "sky" | "rose";
-}
-
 const STATUS_FLOW: Record<string, { label: string; color: string }> = {
   todo: { label: "To do", color: "bg-slate-100 text-slate-600" },
   in_progress: { label: "In progress", color: "bg-violet-50 text-violet-700" },
@@ -66,26 +49,12 @@ const STATUS_FLOW: Record<string, { label: string; color: string }> = {
   done: { label: "Completed", color: "bg-teal-50 text-teal-700" },
 };
 
-function timeAgo(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  return new Date(iso).toLocaleDateString();
-}
-
 export default function OverviewPage() {
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState<TaskRow[]>([]);
   const [submissions, setSubmissions] = useState<SubmissionRow[]>([]);
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
-  const [teamUpdate, setTeamUpdate] = useState("");
-  const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [announcements, setAnnouncements] = useState<
     Array<{
       id: string;
@@ -102,17 +71,11 @@ export default function OverviewPage() {
       { data: tasksData },
       { data: subData },
       { data: profilesData },
-      { data: ideasData },
       { data: announcementsData },
     ] = await Promise.all([
       supabase.from("tasks").select("*"),
       supabase.from("form_submissions").select("*"),
       supabase.from("profiles").select("id, first_name"),
-      supabase
-        .from("blueprint_ideas")
-        .select("id, title, created_at")
-        .order("created_at", { ascending: false })
-        .limit(5),
       supabase
         .from("announcements")
         .select("id, title, body, category, created_at")
@@ -128,62 +91,6 @@ export default function OverviewPage() {
     setSubmissions(safeSubs);
     setProfiles(safeProfiles);
     setAnnouncements((announcementsData ?? []) as typeof announcements);
-
-    // Build a unified activity feed
-    const items: ActivityItem[] = [];
-
-    // Recent task completions
-    safeTasks
-      .filter((t) => t.status === "done")
-      .slice(0, 3)
-      .forEach((t) => {
-        items.push({
-          id: `task-${t.id}`,
-          type: "task_done",
-          title: `Completed: ${t.title}`,
-          detail: `Milestone ${t.milestone}`,
-          timestamp: new Date().toISOString(),
-          accent: "teal",
-        });
-      });
-
-    // Recent form updates
-    safeSubs
-      .filter((s) => s.progress > 0)
-      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
-      .slice(0, 4)
-      .forEach((s) => {
-        const meta = ALL_FORMS.find((f) => f.id === s.form_id);
-        if (!meta) return;
-        items.push({
-          id: `sub-${s.id}`,
-          type: s.status === "Pending approval" ? "form_submitted" : "form_updated",
-          title: meta.title,
-          detail:
-            s.status === "Pending approval"
-              ? "Submitted for review"
-              : `${s.progress}% complete`,
-          timestamp: s.updated_at,
-          accent: meta.color === "rose" ? "rose" : meta.color === "amber" ? "amber" : meta.color === "violet" ? "violet" : "teal",
-        });
-      });
-
-    // Recent ideas
-    interface IdeaRow { id: string; title: string; created_at: string; }
-    (ideasData ?? []).forEach((idea) => {
-      const row = idea as IdeaRow;
-      items.push({
-        id: `idea-${row.id}`,
-        type: "idea_added",
-        title: `New idea: ${row.title}`,
-        detail: "Added to the blueprint scratchpad",
-        timestamp: row.created_at,
-        accent: "sky",
-      });
-    });
-
-    items.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    setActivities(items.slice(0, 6));
     setLoading(false);
   }, [supabase]);
 
@@ -248,20 +155,6 @@ export default function OverviewPage() {
       bg: "bg-sky-50",
     },
   ];
-
-  function postUpdate() {
-    if (!teamUpdate.trim()) return;
-    const newActivity: ActivityItem = {
-      id: `update-${Date.now()}`,
-      type: "milestone",
-      title: "Team update",
-      detail: teamUpdate,
-      timestamp: new Date().toISOString(),
-      accent: "teal",
-    };
-    setActivities((current) => [newActivity, ...current].slice(0, 6));
-    setTeamUpdate("");
-  }
 
   if (loading) {
     return (
