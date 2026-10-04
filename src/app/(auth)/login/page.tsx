@@ -7,7 +7,7 @@ import { ArrowRight, Eye, EyeOff, LockKeyhole, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -20,13 +20,13 @@ export default function LoginPage() {
     setError(null);
     const supabase = createClient();
     const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: `${username.trim()}@eumind.com`,
+      email: email.trim(),
       password,
     });
     if (signInError) {
       setError(
         signInError.message === "Invalid login credentials"
-          ? "The username or password is incorrect. Check your invite details and try again."
+          ? "The email or password is incorrect. Check your invite details and try again."
           : signInError.message,
       );
       setLoading(false);
@@ -89,24 +89,24 @@ export default function LoginPage() {
               Sign in to your workspace
             </h2>
             <p className="mt-3 text-sm leading-6 text-slate-500">
-              Use the username and password from your team lead invitation.
+              Sign in with the email and password your team lead set up for you.
             </p>
           </div>
           <form onSubmit={handleLogin} className="mt-8 space-y-5">
             <div>
               <label
-                htmlFor="username"
+                htmlFor="email"
                 className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-600"
               >
-                Username
+                Email
               </label>
               <input
-                id="username"
-                type="text"
-                autoComplete="username"
-                value={username}
-                onChange={(event) => setUsername(event.target.value)}
-                placeholder="e.g. anna1407"
+                id="email"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="user@domain.com"
                 required
                 className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10"
               />

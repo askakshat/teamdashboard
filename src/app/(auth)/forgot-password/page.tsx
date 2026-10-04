@@ -6,7 +6,7 @@ import { ArrowLeft, ArrowRight, Mail, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 export default function ForgotPasswordPage() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -17,10 +17,9 @@ export default function ForgotPasswordPage() {
     setError(null);
     const origin = window.location.origin;
     const { error: resetError } =
-      await createClient().auth.resetPasswordForEmail(
-        `${username.trim()}@eumind.com`,
-        { redirectTo: `${origin}/auth/callback?next=/update-password` },
-      );
+      await createClient().auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${origin}/auth/callback?next=/update-password`,
+      });
     if (resetError) setError(resetError.message);
     else setSent(true);
     setLoading(false);
@@ -45,7 +44,7 @@ export default function ForgotPasswordPage() {
           Reset your password
         </h1>
         <p className="mt-3 text-sm leading-6 text-slate-500">
-          We&apos;ll send a secure link to the username connected to your EUMIND
+          We&apos;ll send a secure link to the email connected to your EUMIND
           workspace.
         </p>
         {sent ? (
@@ -56,7 +55,7 @@ export default function ForgotPasswordPage() {
             </p>
             <p className="mt-1 text-sm leading-6 text-teal-800/80">
               If an account exists for{" "}
-              <span className="font-semibold">{username}</span>, a reset link is
+              <span className="font-semibold">{email}</span>, a reset link is
               on its way.
             </p>
           </div>
@@ -64,18 +63,18 @@ export default function ForgotPasswordPage() {
           <form onSubmit={handleSubmit} className="mt-8 space-y-5">
             <div>
               <label
-                htmlFor="username"
+                htmlFor="email"
                 className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-600"
               >
-                Username
+                Email
               </label>
               <input
-                id="username"
-                type="text"
-                autoComplete="username"
-                value={username}
-                onChange={(event) => setUsername(event.target.value)}
-                placeholder="e.g. anna1407"
+                id="email"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="user@domain.com"
                 required
                 className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10"
               />
