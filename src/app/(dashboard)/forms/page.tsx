@@ -1,23 +1,287 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { useState } from "react"
-import { ArrowUpRight, CheckCircle2, ClipboardList, FileText, FolderOpen, LockKeyhole, Search, UploadCloud } from "lucide-react"
+import Link from "next/link";
+import { useState, useEffect } from "react";
+import {
+  ArrowUpRight,
+  CheckCircle2,
+  ClipboardList,
+  FileText,
+  FolderOpen,
+  LockKeyhole,
+  Search,
+  UploadCloud,
+  Loader2,
+} from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
-const sections = [
-  { title: "Set up your team", kicker: "Milestones 1–2", color: "teal", forms: [{ id: "roles", title: "Roles & Responsibilities", detail: "Choose roles fairly and make ownership visible.", status: "In progress", progress: 55 }, { id: "group-introduction", title: "Group Introduction & Platform", detail: "First names only, clear layout, safe public sharing.", status: "Ready", progress: 100 }] },
-  { title: "Research & create", kicker: "Milestones 4–5", color: "violet", forms: [{ id: "expert-interview", title: "Local Expert Interview", detail: "Logistics, questions, 300-word insights and media.", status: "Not started", progress: 0 }, { id: "prototype-specs", title: "Prototype Specs & Quality", detail: "Materials, cost, production and the seven criteria.", status: "Not started", progress: 0 }] },
-  { title: "Promote & reflect", kicker: "Milestones 6–8", color: "amber", forms: [{ id: "marketing-plan", title: "Marketing Plan · 7 Ps", detail: "Product, price, place, promotion, people, process, evidence.", status: "Not started", progress: 0 }, { id: "individual-reflection", title: "Individual Reflection", detail: "Each member writes at least 200 words in their own voice.", status: "Not started", progress: 0 }, { id: "competences", title: "Competences Worksheet", detail: "Select 10 across at least 3 categories; group selects top 5.", status: "Not started", progress: 0 }, { id: "self-assessment", title: "Self-Assessment Rubric", detail: "Done / no answers and student scoring before teacher review.", status: "Not started", progress: 0 }] },
-]
+const sectionsConfig = [
+  {
+    title: "Set up your team",
+    kicker: "Milestones 1–2",
+    color: "teal",
+    forms: [
+      {
+        id: "roles",
+        title: "Roles & Responsibilities",
+        detail: "Choose roles fairly and make ownership visible.",
+      },
+      {
+        id: "group-introduction",
+        title: "Group Introduction & Platform",
+        detail: "First names only, clear layout, safe public sharing.",
+      },
+    ],
+  },
+  {
+    title: "Research & create",
+    kicker: "Milestones 4–5",
+    color: "violet",
+    forms: [
+      {
+        id: "expert-interview",
+        title: "Local Expert Interview",
+        detail: "Logistics, questions, 300-word insights and media.",
+      },
+      {
+        id: "prototype-specs",
+        title: "Prototype Specs & Quality",
+        detail: "Materials, cost, production and the seven criteria.",
+      },
+    ],
+  },
+  {
+    title: "Promote & reflect",
+    kicker: "Milestones 6–8",
+    color: "amber",
+    forms: [
+      {
+        id: "marketing-plan",
+        title: "Marketing Plan · 7 Ps",
+        detail: "Product, price, place, promotion, people, process, evidence.",
+      },
+      {
+        id: "individual-reflection",
+        title: "Individual Reflection",
+        detail: "Each member writes at least 200 words in their own voice.",
+      },
+      {
+        id: "competences",
+        title: "Competences Worksheet",
+        detail: "Select 10 across at least 3 categories; group selects top 5.",
+      },
+      {
+        id: "self-assessment",
+        title: "Self-Assessment Rubric",
+        detail: "Done / no answers and student scoring before teacher review.",
+      },
+    ],
+  },
+];
 
 export default function FormsHubPage() {
-  const [query, setQuery] = useState("")
-  const total = sections.flatMap((section) => section.forms).length
-  const ready = sections.flatMap((section) => section.forms).filter((form) => form.progress === 100).length
-  return <div className="mx-auto max-w-[1280px] space-y-7 pb-10">
-    <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end"><div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-600">One home for every submission</p><h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-slate-950">Worksheets & forms</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">Keep the official EUMIND evidence together — draft it here, attach the proof, and publish only when the team lead is happy.</p></div><div className="flex items-center gap-3"><div className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-right"><p className="text-lg font-semibold text-slate-900">{ready}/{total}</p><p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">ready to submit</p></div><button className="inline-flex h-11 items-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-medium text-white hover:bg-slate-800"><UploadCloud className="h-4 w-4" /> Upload evidence</button></div></div>
-    <div className="flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-[0_10px_30px_-22px_rgba(15,23,42,0.25)] md:flex-row md:items-center"><div className="relative flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find a worksheet or submission..." className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/60 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-teal-500" /></div><div className="inline-flex items-center gap-2 px-2 text-xs text-slate-400"><LockKeyhole className="h-3.5 w-3.5" /> Drafts are private to the team</div></div>
-    <div className="grid gap-5 lg:grid-cols-3">{sections.map((section) => <section key={section.title} className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_10px_30px_-22px_rgba(15,23,42,0.25)]"><div className="flex items-start justify-between"><div><p className={`text-[10px] font-semibold uppercase tracking-[0.16em] ${section.color === "teal" ? "text-teal-600" : section.color === "violet" ? "text-violet-600" : "text-amber-600"}`}>{section.kicker}</p><h2 className="mt-1 text-base font-semibold text-slate-900">{section.title}</h2></div><div className={`flex h-9 w-9 items-center justify-center rounded-xl ${section.color === "teal" ? "bg-teal-50 text-teal-600" : section.color === "violet" ? "bg-violet-50 text-violet-600" : "bg-amber-50 text-amber-600"}`}><ClipboardList className="h-4 w-4" /></div></div><div className="mt-5 space-y-3">{section.forms.filter((form) => form.title.toLowerCase().includes(query.toLowerCase()) || form.detail.toLowerCase().includes(query.toLowerCase())).map((form) => <Link href={`/forms/${form.id}`} key={form.id} className="group block rounded-xl border border-slate-100 bg-slate-50/60 p-3.5 transition hover:border-slate-200 hover:bg-white hover:shadow-sm"><div className="flex gap-3"><div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-slate-400 shadow-sm"><FileText className="h-4 w-4" /></div><div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-2"><h3 className="text-sm font-semibold leading-5 text-slate-800">{form.title}</h3><ArrowUpRight className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:text-teal-600" /></div><p className="mt-1 text-xs leading-5 text-slate-500">{form.detail}</p><div className="mt-3 flex items-center justify-between"><span className={`text-[10px] font-semibold ${form.progress === 100 ? "text-teal-600" : form.progress > 0 ? "text-amber-600" : "text-slate-400"}`}>{form.progress === 100 && <CheckCircle2 className="mr-1 inline h-3 w-3" />}{form.status}</span><span className="text-[10px] font-medium text-slate-400">{form.progress}%</span></div><div className="mt-1 h-1 rounded-full bg-slate-200"><div className={`h-1 rounded-full ${form.progress === 100 ? "bg-teal-500" : "bg-amber-400"}`} style={{ width: `${form.progress}%` }} /></div></div></div></Link>)}</div></section>)}</div>
-    <div className="grid gap-4 md:grid-cols-2"><div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/50 p-5"><div className="flex gap-3"><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-slate-400 shadow-sm"><FolderOpen className="h-4 w-4" /></div><div><h3 className="text-sm font-semibold text-slate-800">Evidence library</h3><p className="mt-1 text-xs leading-5 text-slate-500">Photos, reports, unlisted video links and marketing files can live beside the form they support.</p></div></div></div><div className="rounded-2xl border border-amber-200/80 bg-amber-50/60 p-5"><h3 className="text-sm font-semibold text-amber-950">AI accountability · bonus</h3><p className="mt-1 text-xs leading-5 text-amber-800/70">If you use AI, record the tool, prompt, how you adapted it, and which sources you used to fact-check it.</p><Link href="/forms/ai-log" className="mt-3 inline-flex text-xs font-semibold text-amber-800 hover:text-amber-950">Open AI log <ArrowUpRight className="ml-1 inline h-3.5 w-3.5" /></Link></div></div>
-  </div>
+  const [query, setQuery] = useState("");
+  const [submissions, setSubmissions] = useState<any>({});
+  const [loading, setLoading] = useState(true);
+  const supabase = createClient();
+
+  useEffect(() => {
+    async function loadForms() {
+      const { data } = await supabase.from("form_submissions").select("*");
+      if (data) {
+        const subMap = data.reduce(
+          (acc, sub) => {
+            acc[sub.form_id] = sub;
+            return acc;
+          },
+          {} as any,
+        );
+        setSubmissions(subMap);
+      }
+      setLoading(false);
+    }
+    loadForms();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Map config to include submission state
+  const sections = sectionsConfig.map((section) => ({
+    ...section,
+    forms: section.forms.map((form) => {
+      const sub = submissions[form.id] || {
+        status: "Not started",
+        progress: 0,
+      };
+      return { ...form, ...sub };
+    }),
+  }));
+
+  const total = sections.flatMap((section) => section.forms).length;
+  const ready = sections
+    .flatMap((section) => section.forms)
+    .filter((form) => form.progress === 100).length;
+
+  return (
+    <div className="mx-auto max-w-[1280px] space-y-7 pb-10">
+      <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-600">
+            One home for every submission
+          </p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-slate-950">
+            Worksheets & forms
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+            Keep the official EUMIND evidence together — draft it here, attach
+            the proof, and publish only when the team lead is happy.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-right">
+            <p className="text-lg font-semibold text-slate-900">
+              {ready}/{total}
+            </p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+              ready to submit
+            </p>
+          </div>
+          <button className="inline-flex h-11 items-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-medium text-white hover:bg-slate-800">
+            <UploadCloud className="h-4 w-4" /> Upload evidence
+          </button>
+        </div>
+      </div>
+      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-[0_10px_30px_-22px_rgba(15,23,42,0.25)] md:flex-row md:items-center">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Find a worksheet or submission..."
+            className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/60 pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-teal-500"
+          />
+        </div>
+        <div className="inline-flex items-center gap-2 px-2 text-xs text-slate-400">
+          <LockKeyhole className="h-3.5 w-3.5" /> Drafts are private to the team
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex h-64 items-center justify-center rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+          <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
+        </div>
+      ) : (
+        <div className="grid gap-5 lg:grid-cols-3">
+          {sections.map((section) => (
+            <section
+              key={section.title}
+              className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_10px_30px_-22px_rgba(15,23,42,0.25)]"
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <p
+                    className={`text-[10px] font-semibold uppercase tracking-[0.16em] ${section.color === "teal" ? "text-teal-600" : section.color === "violet" ? "text-violet-600" : "text-amber-600"}`}
+                  >
+                    {section.kicker}
+                  </p>
+                  <h2 className="mt-1 text-base font-semibold text-slate-900">
+                    {section.title}
+                  </h2>
+                </div>
+                <div
+                  className={`flex h-9 w-9 items-center justify-center rounded-xl ${section.color === "teal" ? "bg-teal-50 text-teal-600" : section.color === "violet" ? "bg-violet-50 text-violet-600" : "bg-amber-50 text-amber-600"}`}
+                >
+                  <ClipboardList className="h-4 w-4" />
+                </div>
+              </div>
+              <div className="mt-5 space-y-3">
+                {section.forms
+                  .filter(
+                    (form) =>
+                      form.title.toLowerCase().includes(query.toLowerCase()) ||
+                      form.detail.toLowerCase().includes(query.toLowerCase()),
+                  )
+                  .map((form) => (
+                    <Link
+                      href={`/forms/${form.id}`}
+                      key={form.id}
+                      className="group block rounded-xl border border-slate-100 bg-slate-50/60 p-3.5 transition hover:border-slate-200 hover:bg-white hover:shadow-sm"
+                    >
+                      <div className="flex gap-3">
+                        <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-slate-400 shadow-sm">
+                          <FileText className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <h3 className="text-sm font-semibold leading-5 text-slate-800">
+                              {form.title}
+                            </h3>
+                            <ArrowUpRight className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:text-teal-600" />
+                          </div>
+                          <p className="mt-1 text-xs leading-5 text-slate-500">
+                            {form.detail}
+                          </p>
+                          <div className="mt-3 flex items-center justify-between">
+                            <span
+                              className={`text-[10px] font-semibold ${form.progress === 100 ? "text-teal-600" : form.progress > 0 ? "text-amber-600" : "text-slate-400"}`}
+                            >
+                              {form.progress === 100 && (
+                                <CheckCircle2 className="mr-1 inline h-3 w-3" />
+                              )}
+                              {form.status}
+                            </span>
+                            <span className="text-[10px] font-medium text-slate-400">
+                              {form.progress}%
+                            </span>
+                          </div>
+                          <div className="mt-1 h-1 rounded-full bg-slate-200">
+                            <div
+                              className={`h-1 rounded-full ${form.progress === 100 ? "bg-teal-500" : "bg-amber-400"}`}
+                              style={{ width: `${form.progress}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/50 p-5">
+          <div className="flex gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-slate-400 shadow-sm">
+              <FolderOpen className="h-4 w-4" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-slate-800">
+                Evidence library
+              </h3>
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                Photos, reports, unlisted video links and marketing files can
+                live beside the form they support.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="rounded-2xl border border-amber-200/80 bg-amber-50/60 p-5">
+          <h3 className="text-sm font-semibold text-amber-950">
+            AI accountability · bonus
+          </h3>
+          <p className="mt-1 text-xs leading-5 text-amber-800/70">
+            If you use AI, record the tool, prompt, how you adapted it, and
+            which sources you used to fact-check it.
+          </p>
+          <Link
+            href="/forms/ai-log"
+            className="mt-3 inline-flex text-xs font-semibold text-amber-800 hover:text-amber-950"
+          >
+            Open AI log <ArrowUpRight className="ml-1 inline h-3.5 w-3.5" />
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
 }
