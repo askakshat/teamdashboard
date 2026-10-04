@@ -1,7 +1,6 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,10 +8,10 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
+
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { signOut } from "@/actions/auth"
+} from "@/components/ui/dropdown-menu";
+import { signOut } from "@/actions/auth";
 
 interface UserNavProps {
   user: {
@@ -24,7 +23,9 @@ interface UserNavProps {
 
 export function UserNav({ user }: UserNavProps) {
   if (!user) return null;
-  const initials = user.first_name ? user.first_name.charAt(0).toUpperCase() : "U";
+  const initials = user.first_name
+    ? user.first_name.charAt(0).toUpperCase()
+    : "T";
 
   return (
     <DropdownMenu>
@@ -37,21 +38,21 @@ export function UserNav({ user }: UserNavProps) {
         <DropdownMenuGroup>
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">{user.first_name}</p>
+              <p className="text-sm font-medium leading-none">
+                {user.first_name || "Team Member"}
+              </p>
               <p className="text-xs leading-none text-muted-foreground">
                 {user.email}
               </p>
               <p className="text-xs capitalize text-muted-foreground mt-1">
-                  Role: {user.role.replace('_', ' ')}
+                Role: {user.role?.replace("_", " ") || "team member"}
               </p>
             </div>
           </DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => signOut()}>
-          Log out
-        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => signOut()}>Log out</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }
