@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# EUMIND · The Green Loop
 
-## Getting Started
+A collaborative project workspace for **The Creative Entrepreneur 2026–27**. The app brings the official EUMIND milestones, tasks, worksheets, forms, blueprint work and evidence workflow into one private team space.
 
-First, run the development server:
+## Stack
+
+- Next.js App Router + TypeScript
+- Tailwind CSS + shadcn/ui + Lucide
+- Supabase Auth + PostgreSQL + RLS
+- Netlify with the Next.js runtime plugin
+
+## Local development
 
 ```bash
+npm ci
+cp .env.example .env.local
+# Fill in the Supabase URL and anon key in .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`. Unauthenticated visitors are sent to `/login`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Supabase setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Create a Supabase project.
+2. Run [`supabase_schema.sql`](./supabase_schema.sql) once for a new database.
+3. Run [`supabase/migrations/0001_production_auth.sql`](./supabase/migrations/0001_production_auth.sql) to enable signup profile creation and group-scoped RLS.
+4. In Supabase Auth → URL Configuration, add the local and production callback URLs:
+   - `http://localhost:3000/auth/callback`
+   - `https://YOUR-SITE.netlify.app/auth/callback`
+5. Create the team lead account, then set that profile's `role` to `leader` and assign its `group_id`. Add team members through Supabase Auth, then assign their `group_id` in `profiles`.
 
-## Learn More
+The application intentionally does not expose public signup. Team members should be invited or created by the project administrator.
 
-To learn more about Next.js, take a look at the following resources:
+## Netlify deployment
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The repository includes [`netlify.toml`](./netlify.toml). Link the repository to a Netlify site using the `main` branch or the feature branch you are reviewing, then add these environment variables in Netlify:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
-## Deploy on Vercel
+Netlify should use:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Build command: `npm run build`
+- Publish directory: `.next`
+- Plugin: `@netlify/plugin-nextjs`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Verification
+
+```bash
+npm run lint
+npm run build
+```
+
+Lint currently reports only legacy unused-import warnings in older pages and helpers; the production build completes successfully.
