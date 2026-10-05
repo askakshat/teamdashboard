@@ -66,10 +66,12 @@ export default function TeamPage() {
   const [loading, setLoading] = useState(true);
 
   const loadData = useCallback(async () => {
+    // Use select("*") so the query succeeds even if the project_role column
+    // hasn't been added yet. The ProjectRoleBadge handles undefined gracefully.
     const [{ data: profilesData }, { data: tasksData }] = await Promise.all([
       supabase
         .from("profiles")
-        .select("id, first_name, email, role, project_role, created_at")
+        .select("*")
         .order("first_name", { ascending: true }),
       supabase.from("tasks").select("id, title, status, owner_id, milestone, priority"),
     ]);
