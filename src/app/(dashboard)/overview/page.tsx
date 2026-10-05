@@ -19,6 +19,7 @@ import { createClient } from "@/lib/supabase/client";
 import { MILESTONES } from "@/lib/forms-config";
 import { TeamChat } from "@/components/team-chat";
 import { getDisplayName } from "@/lib/roles";
+import { useProfile, useIsLeader } from "@/components/profile-provider";
 
 interface TaskRow {
   id: string;
@@ -53,6 +54,8 @@ const STATUS_FLOW: Record<string, { label: string; color: string }> = {
 
 export default function OverviewPage() {
   const supabase = createClient();
+  const profile = useProfile();
+  const isLeader = useIsLeader();
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState<TaskRow[]>([]);
   const [submissions, setSubmissions] = useState<SubmissionRow[]>([]);
@@ -108,6 +111,11 @@ export default function OverviewPage() {
   const openTasks = tasks.filter((t) => t.status !== "done").length;
   const needsReview = tasks.filter((t) => t.status === "review").length;
   const pendingSubs = submissions.filter((s) => s.status === "Pending approval").length;
+  // For members: count tasks assigned to me (by owner_id)
+  const myAssigned = tasks.filter((t) => t.owner_id === profile?.id).length;
+  const myOpenAssigned = tasks.filter(
+    (t) => t.owner_id === profile?.id && t.status !== "done",
+  ).length;
 
   // Find next upcoming milestone (first one with < 100% completion)
   const upcomingMilestone = MILESTONES.find((m) => {
@@ -116,12 +124,6 @@ export default function OverviewPage() {
     if (msTasks.length === 0) return true;
     return msTasks.some((t) => t.status !== "done");
   });
-
-  // Team-pulse: simple ratio of completed tasks vs. total open
-  const teamPulse =
-    total > 0
-      ? `${Math.min(completed, 5)}/5 momentum`
-      : "Set up tasks";
 
   const stats = [
     {
@@ -140,18 +142,27 @@ export default function OverviewPage() {
       accent: "text-violet-600",
       bg: "bg-violet-50",
     },
+    isLeader
+      ? {
+          label: "Needs your review",
+          value: pendingSubs > 0 ? String(pendingSubs) : "0",
+          note: pendingSubs > 0 ? "Open approval queue" : "Nothing pending",
+          icon: FileCheck2,
+          accent: "text-amber-600",
+          bg: "bg-amber-50",
+        }
+      : {
+          label: "Assigned to you",
+          value: myAssigned > 0 ? String(myAssigned) : "0",
+          note: myOpenAssigned > 0 ? `${myOpenAssigned} still open` : "All done!",
+          icon: FileCheck2,
+          accent: "text-amber-600",
+          bg: "bg-amber-50",
+        },
     {
-      label: "Needs your review",
-      value: pendingSubs > 0 ? String(pendingSubs) : "0",
-      note: pendingSubs > 0 ? "Open approval queue" : "Nothing pending",
-      icon: FileCheck2,
-      accent: "text-amber-600",
-      bg: "bg-amber-50",
-    },
-    {
-      label: "Team pulse",
-      value: teamPulse,
-      note: `${profiles.length} collaborators`,
+      label: "Collaborators",
+      value: String(profiles.length),
+      note: "Team members",
       icon: Users,
       accent: "text-sky-600",
       bg: "bg-sky-50",

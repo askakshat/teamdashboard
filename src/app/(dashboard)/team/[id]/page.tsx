@@ -196,7 +196,7 @@ export default function MemberProfilePage() {
                 memberId={member.id}
                 memberName={getDisplayName(member)}
                 currentRoleIds={member.project_role}
-                canEdit={isLeader && !isCurrentUser}
+                canEdit={isLeader}
                 onUpdated={() => loadData()}
               />
             </div>

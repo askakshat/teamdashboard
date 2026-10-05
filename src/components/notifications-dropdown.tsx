@@ -40,6 +40,7 @@ const typeColor: Record<string, string> = {
   form_rejected: "bg-red-50 text-red-600",
   announcement: "bg-rose-50 text-rose-600",
   mention: "bg-violet-50 text-violet-600",
+  dm: "bg-sky-50 text-sky-600",
 };
 
 export function NotificationsDropdown() {

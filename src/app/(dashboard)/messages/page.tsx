@@ -191,6 +191,19 @@ export default function MessagesPage() {
       if (error) throw error;
       setAllDms((current) => [...current, data as DMRow]);
       setBody("");
+      // Notify the recipient about the new DM
+      try {
+        await supabase.from("notifications").insert({
+          user_id: selectedMember.id,
+          type: "dm",
+          title: `New message from ${getDisplayName(profile)}`,
+          body: text.length > 80 ? text.substring(0, 80) + "…" : text,
+          link: "/messages",
+          read: false,
+        });
+      } catch {
+        // notifications table might not exist — ignore
+      }
     } catch {
       toast({
         title: "Could not send message",

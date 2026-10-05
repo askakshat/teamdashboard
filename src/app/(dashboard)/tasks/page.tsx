@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState, useEffect, useCallback } from "react";
-import Link from "next/link";
 import {
   CalendarDays,
   Check,
@@ -24,6 +23,7 @@ import { useProfile, useIsLeader } from "@/components/profile-provider";
 import { MILESTONES, DEFAULT_TASKS } from "@/lib/forms-config";
 import { getTaskPermissions, getDisplayName } from "@/lib/roles";
 import { TaskComments } from "@/components/task-comments";
+import { AssigneePicker } from "@/components/assignee-picker";
 
 interface TaskRow {
   id: string;
@@ -36,6 +36,11 @@ interface TaskRow {
   created_by?: string | null;
   submitted_for_review_at?: string | null;
   approved_at?: string | null;
+}
+
+interface AssigneeRow {
+  task_id: string;
+  user_id: string;
 }
 
 interface ProfileRow {
@@ -86,6 +91,7 @@ export default function TasksPage() {
 
   const [tasks, setTasks] = useState<TaskRow[]>([]);
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
+  const [assignees, setAssignees] = useState<AssigneeRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [owner, setOwner] = useState("All owners");
@@ -100,12 +106,14 @@ export default function TasksPage() {
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    const [{ data: tasksData }, { data: profilesData }] = await Promise.all([
+    const [{ data: tasksData }, { data: profilesData }, { data: assigneesData }] = await Promise.all([
       supabase.from("tasks").select("*"),
       supabase.from("profiles").select("*"),
+      supabase.from("task_assignees").select("task_id, user_id"),
     ]);
     setTasks((tasksData ?? []) as TaskRow[]);
     setProfiles((profilesData ?? []) as ProfileRow[]);
+    setAssignees((assigneesData ?? []) as AssigneeRow[]);
     setLoading(false);
   }, [supabase]);
 
@@ -299,42 +307,6 @@ export default function TasksPage() {
     await supabase.from("tasks").update({ title }).eq("id", id);
   }
 
-  async function assignOwner(taskId: string, ownerId: string | null) {
-    const task = tasks.find((t) => t.id === taskId);
-    if (!task) return;
-
-    // Members can only assign to themselves
-    if (!isLeader && ownerId && ownerId !== profile?.id) {
-      toast({
-        title: "Can't assign to others",
-        description: "Members can only assign tasks to themselves.",
-        variant: "error",
-      });
-      return;
-    }
-
-    setTasks((current) =>
-      current.map((t) => (t.id === taskId ? { ...t, owner_id: ownerId } : t)),
-    );
-    await supabase.from("tasks").update({ owner_id: ownerId }).eq("id", taskId);
-
-    // Notify the new assignee
-    if (ownerId && ownerId !== profile?.id) {
-      try {
-        await supabase.from("notifications").insert({
-          user_id: ownerId,
-          type: "task_assigned",
-          title: `Task assigned to you: ${task.title}`,
-          body: `${getDisplayName(profile)} assigned you a task on the EUMIND dashboard.`,
-          link: "/tasks",
-          read: false,
-        });
-      } catch {
-        // ignore
-      }
-    }
-  }
-
   async function setPriority(taskId: string, priority: string) {
     setTasks((current) =>
       current.map((t) => (t.id === taskId ? { ...t, priority } : t)),
@@ -373,6 +345,13 @@ export default function TasksPage() {
 
   const enrichedTasks = useMemo(() => {
     return tasks.map((task) => {
+      const taskAssigneeIds = assignees
+        .filter((a) => a.task_id === task.id)
+        .map((a) => a.user_id);
+      // Include owner_id if not already in assignees (backward compat)
+      const allAssigneeIds = task.owner_id && !taskAssigneeIds.includes(task.owner_id)
+        ? [task.owner_id, ...taskAssigneeIds]
+        : taskAssigneeIds;
       const ownerProfile = profiles.find((p) => p.id === task.owner_id);
       const ownerName = ownerProfile ? getDisplayName(ownerProfile) : "Unassigned";
       const initials =
@@ -384,12 +363,13 @@ export default function TasksPage() {
         ...task,
         ownerName,
         initials,
+        assigneeIds: allAssigneeIds,
         color: getColorForUser(task.owner_id ?? ""),
         canEdit: perms.canEdit(task),
         canDelete: perms.canDelete(task),
       };
     });
-  }, [tasks, profiles, perms]);
+  }, [tasks, profiles, perms, assignees]);
 
   const filtered = useMemo(
     () =>
@@ -397,9 +377,9 @@ export default function TasksPage() {
         (task) =>
           task.title.toLowerCase().includes(query.toLowerCase()) &&
           (owner === "All owners" ||
-            task.owner_id === owner ||
-            (owner === "unassigned" && !task.owner_id) ||
-            (owner === "mine" && task.owner_id === profile?.id)) &&
+            task.assigneeIds.includes(owner) ||
+            (owner === "unassigned" && task.assigneeIds.length === 0) ||
+            (owner === "mine" && task.assigneeIds.includes(profile?.id ?? ""))) &&
           (milestone === "All milestones" ||
             String(task.milestone) === milestone),
       ),
@@ -773,41 +753,16 @@ export default function TasksPage() {
                           </p>
                         )}
 
-                        {/* Row 3: owner + due date */}
+                        {/* Row 3: assignees + due date */}
                         <div className="mt-2.5 flex items-center justify-between gap-2">
-                          <div className="flex min-w-0 items-center gap-1.5">
-                            <Link
-                              href={task.owner_id ? `/team/${task.owner_id}` : "#"}
-                              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[8px] font-bold transition hover:ring-2 hover:ring-teal-400 ${task.color}`}
-                              title={`View ${task.ownerName}'s profile`}
-                              onClick={(e) => {
-                                if (!task.owner_id) e.preventDefault();
-                              }}
-                            >
-                              {task.initials}
-                            </Link>
-                            {isLeader ? (
-                              <select
-                                value={task.owner_id ?? ""}
-                                onChange={(e) => {
-                                  const v = e.target.value;
-                                  assignOwner(task.id, v ? v : null);
-                                }}
-                                className="min-w-0 cursor-pointer border-0 bg-transparent text-[11px] text-slate-500 outline-none hover:text-slate-800"
-                                title="Assign owner"
-                              >
-                                <option value="">Unassigned</option>
-                                {profiles.map((p) => (
-                                  <option key={p.id} value={p.id}>
-                                    {getDisplayName(p)}
-                                  </option>
-                                ))}
-                              </select>
-                            ) : (
-                              <span className="truncate text-[11px] text-slate-500">
-                                {task.ownerName}
-                              </span>
-                            )}
+                          <div className="min-w-0 flex-1">
+                            <AssigneePicker
+                              taskId={task.id}
+                              selectedIds={task.assigneeIds}
+                              members={profiles}
+                              canEdit={isLeader}
+                              onUpdated={() => loadData()}
+                            />
                           </div>
                           <span className="shrink-0 text-[10px] font-medium text-slate-400">
                             {task.due_date || "TBD"}

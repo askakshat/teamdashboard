@@ -24,6 +24,7 @@ interface PendingSubmission {
   progress: number;
   updated_at: string;
   data: Record<string, unknown>;
+  created_by: string | null;
 }
 
 function timeAgo(iso: string): string {
@@ -133,6 +134,7 @@ export default function LeaderApprovalQueue() {
 
   async function handleApprove(id: string, formId: string) {
     setActing(id);
+    const item = queue.find((q) => q.id === id);
     const { error } = await supabase
       .from("form_submissions")
       .update({ status: "Approved", updated_at: new Date().toISOString() })
@@ -146,6 +148,21 @@ export default function LeaderApprovalQueue() {
         description: `The ${ALL_FORMS.find((f) => f.id === formId)?.title ?? "submission"} is now visible to the jury.`,
         variant: "success",
       });
+      // Notify the submitter
+      if (item?.created_by) {
+        try {
+          await supabase.from("notifications").insert({
+            user_id: item.created_by,
+            type: "form_approved",
+            title: `Approved: ${ALL_FORMS.find((f) => f.id === formId)?.title ?? "Your submission"}`,
+            body: "Your submission has been approved by the team lead and is now visible to the jury.",
+            link: `/forms/${formId}`,
+            read: false,
+          });
+        } catch {
+          // ignore
+        }
+      }
       setQueue((current) => current.filter((item) => item.id !== id));
     }
   }
@@ -182,6 +199,22 @@ export default function LeaderApprovalQueue() {
         description: `${meta?.title ?? "Submission"} returned with your feedback.`,
         variant: "info",
       });
+      // Notify the submitter about the revision request
+      const item = queue.find((q) => q.id === id);
+      if (item?.created_by) {
+        try {
+          await supabase.from("notifications").insert({
+            user_id: item.created_by,
+            type: "form_rejected",
+            title: `Changes required: ${meta?.title ?? "Your submission"}`,
+            body: `The leader requested revisions. Feedback: "${note}"`,
+            link: `/forms/${formId}`,
+            read: false,
+          });
+        } catch {
+          // ignore
+        }
+      }
       setQueue((current) => current.filter((item) => item.id !== id));
       setFeedback((current) => {
         const next = { ...current };
