@@ -7,7 +7,6 @@ import {
   Check,
   CirclePlus,
   Filter,
-  GripVertical,
   Search,
   SlidersHorizontal,
   UserRound,
@@ -493,8 +492,8 @@ export default function TasksPage() {
         </div>
       )}
 
-      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-[0_10px_30px_-22px_rgba(15,23,42,0.25)] md:flex-row md:items-center">
-        <div className="relative flex-1">
+      <div className="flex flex-col gap-2 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-[0_10px_30px_-22px_rgba(15,23,42,0.25)] sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="relative flex-1 min-w-[180px]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             value={query}
@@ -506,7 +505,7 @@ export default function TasksPage() {
         <select
           value={owner}
           onChange={(event) => setOwner(event.target.value)}
-          className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-600 outline-none"
+          className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-600 outline-none sm:w-auto"
         >
           <option value="All owners">All owners</option>
           <option value="mine">Assigned to me</option>
@@ -520,7 +519,7 @@ export default function TasksPage() {
         <select
           value={milestone}
           onChange={(event) => setMilestone(event.target.value)}
-          className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-600 outline-none"
+          className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-600 outline-none sm:w-auto"
         >
           <option>All milestones</option>
           {MILESTONES.map((m) => (
@@ -531,7 +530,7 @@ export default function TasksPage() {
         </select>
         <button
           onClick={() => setShowFilters((v) => !v)}
-          className={`inline-flex h-10 items-center justify-center gap-2 rounded-xl border px-3 text-sm transition ${
+          className={`inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border px-3 text-sm transition sm:w-auto ${
             showFilters
               ? "border-teal-400 bg-teal-50 text-teal-700"
               : "border-slate-200 text-slate-500 hover:bg-slate-50"
@@ -582,19 +581,18 @@ export default function TasksPage() {
         </div>
       )}
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-xs text-slate-400">
+      <div className="flex flex-col gap-2 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2">
           <Filter className="h-3.5 w-3.5" /> Showing {filtered.length} of{" "}
           {tasks.length} tasks
         </div>
-        <div className="flex items-center gap-4 text-xs text-slate-400">
+        <div className="flex flex-wrap items-center gap-3">
           <span>
             <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-amber-400" />
             High priority
           </span>
           <span className="inline-flex items-center gap-1">
-            <CalendarDays className="h-3.5 w-3.5" /> Deadlines follow the
-            official scenario
+            <CalendarDays className="h-3.5 w-3.5" /> Official EUMIND deadlines
           </span>
         </div>
       </div>
@@ -659,7 +657,7 @@ export default function TasksPage() {
                     🔒 Leader approval required
                   </p>
                 )}
-                <div className="mt-2 space-y-3">
+                <div className="mt-2 space-y-2.5">
                   {filtered
                     .filter((task) => task.status === column.id)
                     .map((task) => (
@@ -667,218 +665,240 @@ export default function TasksPage() {
                         key={task.id}
                         draggable={task.canEdit}
                         onDragStart={() => setDragged(task.id)}
-                        className={`group rounded-xl border border-slate-200/80 bg-white p-4 shadow-[0_8px_20px_-18px_rgba(15,23,42,0.35)] transition hover:-translate-y-0.5 hover:border-slate-300 ${
+                        className={`group rounded-xl border border-slate-200/80 bg-white p-3 shadow-[0_8px_20px_-18px_rgba(15,23,42,0.35)] transition hover:-translate-y-0.5 hover:border-slate-300 ${
                           task.canEdit ? "cursor-grab active:cursor-grabbing" : "cursor-default opacity-90"
                         }`}
                       >
-                        <div className="flex items-start gap-2">
-                          {task.canEdit && (
-                            <GripVertical className="mt-0.5 h-4 w-4 shrink-0 text-slate-300 opacity-0 transition group-hover:opacity-100" />
-                          )}
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
-                                M{task.milestone}
+                        {/* Row 1: milestone + priority + quick actions */}
+                        <div className="flex items-center justify-between gap-1.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                              M{task.milestone}
+                            </span>
+                            {task.priority === "High" && (
+                              <span className="rounded-full bg-amber-50 px-1.5 py-0.5 text-[9px] font-semibold text-amber-700">
+                                High
                               </span>
-                              <div className="flex items-center gap-1.5">
-                                {task.priority === "High" && (
-                                  <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
-                                    High
-                                  </span>
-                                )}
-                                {task.status === "review" && isLeader && (
-                                  <button
-                                    onClick={() => moveTask("done", task.id)}
-                                    className="rounded-full bg-teal-500 px-2 py-0.5 text-[10px] font-bold text-white transition hover:bg-teal-600"
-                                    title="Approve this task"
-                                    type="button"
-                                  >
-                                    ✓ Approve
-                                  </button>
-                                )}
-                                {task.status === "review" && !isLeader && (
-                                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">
-                                    Pending
-                                  </span>
-                                )}
-                                {task.canEdit && (
-                                  <button
-                                    onClick={() => {
-                                      setEditing(task.id);
-                                      setEditTitle(task.title);
-                                    }}
-                                    className="text-slate-300 opacity-0 transition hover:text-slate-700 group-hover:opacity-100"
-                                    aria-label="Edit title"
-                                    type="button"
-                                  >
-                                    <Pencil className="h-3.5 w-3.5" />
-                                  </button>
-                                )}
-                                {task.canDelete && (
-                                  <button
-                                    onClick={() => deleteTask(task.id)}
-                                    className="text-slate-300 opacity-0 transition hover:text-red-500 group-hover:opacity-100"
-                                    aria-label="Delete task"
-                                    type="button"
-                                  >
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                            {editing === task.id ? (
-                              <div className="mt-2 flex items-center gap-1">
-                                <input
-                                  autoFocus
-                                  value={editTitle}
-                                  onChange={(e) => setEditTitle(e.target.value)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter") saveTitle(task.id);
-                                    if (e.key === "Escape") setEditing(null);
-                                  }}
-                                  className="h-7 w-full rounded-md border border-teal-400 bg-white px-2 text-sm font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-teal-400"
-                                />
-                                <button
-                                  onClick={() => saveTitle(task.id)}
-                                  className="rounded-md bg-teal-600 p-1 text-white hover:bg-teal-700"
-                                  type="button"
-                                >
-                                  <Check className="h-3.5 w-3.5" />
-                                </button>
-                                <button
-                                  onClick={() => setEditing(null)}
-                                  className="rounded-md bg-slate-100 p-1 text-slate-500 hover:bg-slate-200"
-                                  type="button"
-                                >
-                                  <X className="h-3.5 w-3.5" />
-                                </button>
-                              </div>
-                            ) : (
-                              <h3 className="mt-2 text-sm font-semibold leading-5 text-slate-800">
-                                {task.title}
-                              </h3>
                             )}
-
-                            {/* Review/Approval timestamps */}
-                            {task.status === "review" && task.submitted_for_review_at && (
-                              <p className="mt-1 text-[10px] text-amber-600">
-                                Submitted {new Date(task.submitted_for_review_at).toLocaleDateString()}
-                              </p>
-                            )}
-                            {task.status === "done" && task.approved_at && (
-                              <p className="mt-1 text-[10px] text-teal-600">
-                                Approved {new Date(task.approved_at).toLocaleDateString()}
-                              </p>
-                            )}
-
-                            <div className="mt-3 flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <Link
-                                  href={`/team/${task.owner_id}`}
-                                  className={`flex h-6 w-6 items-center justify-center rounded-full text-[9px] font-bold transition hover:ring-2 hover:ring-teal-400 ${task.color}`}
-                                  title={`View ${task.ownerName}'s profile`}
-                                  onClick={(e) => {
-                                    if (!task.owner_id) e.preventDefault();
-                                  }}
-                                >
-                                  {task.initials}
-                                </Link>
-                                {isLeader ? (
-                                  <select
-                                    value={task.owner_id ?? ""}
-                                    onChange={(e) => {
-                                      const v = e.target.value;
-                                      assignOwner(task.id, v ? v : null);
-                                    }}
-                                    className="cursor-pointer border-0 bg-transparent text-xs text-slate-500 outline-none hover:text-slate-800"
-                                    title="Assign owner"
-                                  >
-                                    <option value="">Unassigned</option>
-                                    {profiles.map((p) => (
-                                      <option key={p.id} value={p.id}>
-                                        {getDisplayName(p)}
-                                      </option>
-                                    ))}
-                                  </select>
-                                ) : (
-                                  <span className="text-xs text-slate-500">
-                                    {task.ownerName}
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-1">
-                                {isLeader && (
-                                  <select
-                                    value={task.priority}
-                                    onChange={(e) => {
-                                      e.stopPropagation();
-                                      setPriority(task.id, e.target.value);
-                                    }}
-                                    className="cursor-pointer border-0 bg-transparent text-[10px] font-semibold text-slate-500 outline-none hover:bg-slate-50"
-                                    title="Set priority"
-                                  >
-                                    <option value="Low">Low</option>
-                                    <option value="Medium">Medium</option>
-                                    <option value="High">High</option>
-                                  </select>
-                                )}
-                                <button
-                                  onClick={() =>
-                                    setCommentsOpen(
-                                      commentsOpen === task.id ? null : task.id,
-                                    )
-                                  }
-                                  className="rounded p-1 text-slate-300 transition hover:bg-slate-100 hover:text-slate-600"
-                                  title="Comments"
-                                  type="button"
-                                >
-                                  <MessageSquare className="h-3.5 w-3.5" />
-                                </button>
-                              </div>
-                            </div>
-                            <div className="mt-2 flex items-center justify-between">
-                              {isLeader ? (
-                                <select
-                                  value={task.milestone}
-                                  onChange={(e) => updateTaskMilestone(task.id, Number(e.target.value))}
-                                  className="cursor-pointer border-0 bg-transparent text-[10px] font-semibold text-slate-400 outline-none hover:bg-slate-50"
-                                  title="Set milestone"
-                                >
-                                  {MILESTONES.map((m) => (
-                                    <option key={m.number} value={m.number}>
-                                      M{m.number} · {m.title}
-                                    </option>
-                                  ))}
-                                </select>
-                              ) : (
-                                <span className="text-[10px] text-slate-400">
-                                  M{task.milestone}
-                                </span>
-                              )}
-                              <span className="text-[11px] font-medium text-slate-400">
-                                {task.due_date || "TBD"}
+                            {task.status === "review" && !isLeader && (
+                              <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold text-amber-700">
+                                Pending
                               </span>
-                            </div>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-0.5">
+                            {task.status === "review" && isLeader && (
+                              <button
+                                onClick={() => moveTask("done", task.id)}
+                                className="rounded-full bg-teal-500 px-2 py-0.5 text-[9px] font-bold text-white transition hover:bg-teal-600"
+                                title="Approve this task"
+                                type="button"
+                              >
+                                ✓ Approve
+                              </button>
+                            )}
+                            {task.canEdit && (
+                              <button
+                                onClick={() => {
+                                  setEditing(task.id);
+                                  setEditTitle(task.title);
+                                }}
+                                className="rounded p-1 text-slate-300 transition hover:bg-slate-100 hover:text-slate-700"
+                                aria-label="Edit title"
+                                type="button"
+                              >
+                                <Pencil className="h-3 w-3" />
+                              </button>
+                            )}
+                            {isLeader && (
+                              <button
+                                onClick={() => deleteTask(task.id)}
+                                className="rounded p-1 text-slate-300 transition hover:bg-red-50 hover:text-red-500"
+                                aria-label="Delete task"
+                                title="Delete task"
+                                type="button"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            )}
                           </div>
                         </div>
 
-                        {/* Submit for review button (members only, on in_progress tasks they own) */}
+                        {/* Row 2: title (or edit mode) */}
+                        {editing === task.id ? (
+                          <div className="mt-2 flex items-center gap-1">
+                            <input
+                              autoFocus
+                              value={editTitle}
+                              onChange={(e) => setEditTitle(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") saveTitle(task.id);
+                                if (e.key === "Escape") setEditing(null);
+                              }}
+                              className="h-7 w-full rounded-md border border-teal-400 bg-white px-2 text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-teal-400"
+                            />
+                            <button
+                              onClick={() => saveTitle(task.id)}
+                              className="rounded-md bg-teal-600 p-1 text-white hover:bg-teal-700"
+                              type="button"
+                            >
+                              <Check className="h-3 w-3" />
+                            </button>
+                            <button
+                              onClick={() => setEditing(null)}
+                              className="rounded-md bg-slate-100 p-1 text-slate-500 hover:bg-slate-200"
+                              type="button"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ) : (
+                          <h3
+                            className="mt-1.5 text-xs font-semibold leading-5 break-words text-slate-800"
+                            onClick={() => task.canEdit && setEditing(task.id)}
+                          >
+                            {task.title}
+                          </h3>
+                        )}
+
+                        {/* Review/approval timestamps */}
+                        {task.status === "review" && task.submitted_for_review_at && (
+                          <p className="mt-1 text-[9px] text-amber-600">
+                            Submitted {new Date(task.submitted_for_review_at).toLocaleDateString()}
+                          </p>
+                        )}
+                        {task.status === "done" && task.approved_at && (
+                          <p className="mt-1 text-[9px] text-teal-600">
+                            Approved {new Date(task.approved_at).toLocaleDateString()}
+                          </p>
+                        )}
+
+                        {/* Row 3: owner + due date */}
+                        <div className="mt-2.5 flex items-center justify-between gap-2">
+                          <div className="flex min-w-0 items-center gap-1.5">
+                            <Link
+                              href={task.owner_id ? `/team/${task.owner_id}` : "#"}
+                              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[8px] font-bold transition hover:ring-2 hover:ring-teal-400 ${task.color}`}
+                              title={`View ${task.ownerName}'s profile`}
+                              onClick={(e) => {
+                                if (!task.owner_id) e.preventDefault();
+                              }}
+                            >
+                              {task.initials}
+                            </Link>
+                            {isLeader ? (
+                              <select
+                                value={task.owner_id ?? ""}
+                                onChange={(e) => {
+                                  const v = e.target.value;
+                                  assignOwner(task.id, v ? v : null);
+                                }}
+                                className="min-w-0 cursor-pointer border-0 bg-transparent text-[11px] text-slate-500 outline-none hover:text-slate-800"
+                                title="Assign owner"
+                              >
+                                <option value="">Unassigned</option>
+                                {profiles.map((p) => (
+                                  <option key={p.id} value={p.id}>
+                                    {getDisplayName(p)}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : (
+                              <span className="truncate text-[11px] text-slate-500">
+                                {task.ownerName}
+                              </span>
+                            )}
+                          </div>
+                          <span className="shrink-0 text-[10px] font-medium text-slate-400">
+                            {task.due_date || "TBD"}
+                          </span>
+                        </div>
+
+                        {/* Row 4: leader-only controls (status + milestone + priority) */}
+                        {isLeader && (
+                          <div className="mt-2 flex flex-wrap items-center gap-1 border-t border-slate-100 pt-2">
+                            {/* Status selector */}
+                            <select
+                              value={task.status}
+                              onChange={(e) => moveTask(e.target.value, task.id)}
+                              className="cursor-pointer rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 outline-none hover:bg-slate-100"
+                              title="Change status"
+                            >
+                              <option value="todo">To do</option>
+                              <option value="in_progress">In progress</option>
+                              <option value="review">Needs review</option>
+                              <option value="done">✓ Completed</option>
+                            </select>
+                            {/* Milestone selector */}
+                            <select
+                              value={task.milestone}
+                              onChange={(e) => updateTaskMilestone(task.id, Number(e.target.value))}
+                              className="cursor-pointer rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 outline-none hover:bg-slate-100"
+                              title="Set milestone"
+                            >
+                              {MILESTONES.map((m) => (
+                                <option key={m.number} value={m.number}>
+                                  M{m.number}
+                                </option>
+                              ))}
+                            </select>
+                            {/* Priority selector */}
+                            <select
+                              value={task.priority}
+                              onChange={(e) => setPriority(task.id, e.target.value)}
+                              className="cursor-pointer rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 outline-none hover:bg-slate-100"
+                              title="Set priority"
+                            >
+                              <option value="Low">Low</option>
+                              <option value="Medium">Med</option>
+                              <option value="High">High</option>
+                            </select>
+                            {/* Comments */}
+                            <button
+                              onClick={() =>
+                                setCommentsOpen(commentsOpen === task.id ? null : task.id)
+                              }
+                              className="ml-auto rounded p-1 text-slate-300 transition hover:bg-slate-100 hover:text-slate-600"
+                              title="Comments"
+                              type="button"
+                            >
+                              <MessageSquare className="h-3 w-3" />
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Row 4 for members: just comments */}
+                        {!isLeader && (
+                          <div className="mt-2 flex items-center justify-end border-t border-slate-100 pt-2">
+                            <button
+                              onClick={() =>
+                                setCommentsOpen(commentsOpen === task.id ? null : task.id)
+                              }
+                              className="rounded p-1 text-slate-300 transition hover:bg-slate-100 hover:text-slate-600"
+                              title="Comments"
+                              type="button"
+                            >
+                              <MessageSquare className="h-3 w-3" />
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Submit for review button (members only) */}
                         {!isLeader &&
                           task.status === "in_progress" &&
                           task.owner_id === profile?.id && (
                             <button
                               onClick={() => moveTask("review", task.id)}
-                              className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg bg-amber-500 py-1.5 text-[11px] font-bold text-white transition hover:bg-amber-600"
+                              className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-amber-500 py-1.5 text-[10px] font-bold text-white transition hover:bg-amber-600"
                               type="button"
                             >
-                              <Send className="h-3 w-3" /> Submit for leader review
+                              <Send className="h-3 w-3" /> Submit for review
                             </button>
                           )}
 
                         {task.status === "done" && (
-                          <div className="mt-3 flex items-center gap-1.5 text-[11px] font-medium text-teal-600">
-                            <Check className="h-3.5 w-3.5" /> Ready for the
-                            portfolio
+                          <div className="mt-2 flex items-center gap-1.5 text-[10px] font-medium text-teal-600">
+                            <Check className="h-3 w-3" /> Ready for the portfolio
                           </div>
                         )}
                       </article>
