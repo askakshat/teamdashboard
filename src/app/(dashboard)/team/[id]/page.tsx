@@ -17,8 +17,8 @@ import { useProfile, useIsLeader } from "@/components/profile-provider";
 import { useParams } from "next/navigation";
 import { MILESTONES } from "@/lib/forms-config";
 import { ProjectRoleEditor } from "@/components/project-role-editor";
-import { getProjectRole } from "@/lib/project-roles";
-import { getDisplayName, getInitials } from "@/lib/roles";
+import { getProjectRoles } from "@/lib/project-roles";
+import { getDisplayName } from "@/lib/roles";
 
 interface ProfileRow {
   id: string;
@@ -26,7 +26,7 @@ interface ProfileRow {
   display_name?: string | null;
   email: string;
   role: string;
-  project_role: string | null;
+  project_role: string[] | null;
   created_at: string;
 }
 
@@ -190,33 +190,43 @@ export default function MemberProfilePage() {
             {/* Project role badge + leader-only editor */}
             <div className="mt-3">
               <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">
-                Project role
+                Project roles
               </p>
               <ProjectRoleEditor
                 memberId={member.id}
                 memberName={getDisplayName(member)}
-                currentRoleId={member.project_role}
+                currentRoleIds={member.project_role}
                 canEdit={isLeader && !isCurrentUser}
                 onUpdated={() => loadData()}
               />
             </div>
-            {/* Show role responsibilities if a project role is assigned */}
-            {member.project_role && (() => {
-              const role = getProjectRole(member.project_role);
-              if (!role) return null;
+            {/* Show responsibilities for ALL assigned project roles */}
+            {(() => {
+              const roles = getProjectRoles(member.project_role);
+              if (roles.length === 0) return null;
               return (
-                <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3">
-                  <p className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
-                    <span>{role.icon}</span> {role.name} — responsibilities
-                  </p>
-                  <ul className="mt-2 space-y-1">
-                    {role.responsibilities.map((r, i) => (
-                      <li key={i} className="flex items-start gap-1.5 text-[11px] leading-5 text-slate-600">
-                        <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-slate-400" />
-                        {r}
-                      </li>
-                    ))}
-                  </ul>
+                <div className="mt-3 space-y-2">
+                  {roles.map((role) => (
+                    <div
+                      key={role.id}
+                      className="rounded-xl border border-slate-100 bg-slate-50/60 p-3"
+                    >
+                      <p className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                        <span>{role.icon}</span> {role.name} — responsibilities
+                      </p>
+                      <ul className="mt-2 space-y-1">
+                        {role.responsibilities.map((r, i) => (
+                          <li
+                            key={i}
+                            className="flex items-start gap-1.5 text-[11px] leading-5 text-slate-600"
+                          >
+                            <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-slate-400" />
+                            {r}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
                 </div>
               );
             })()}

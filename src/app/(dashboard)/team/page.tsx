@@ -22,7 +22,7 @@ interface ProfileRow {
   display_name?: string | null;
   email: string;
   role: string;
-  project_role: string | null;
+  project_role: string[] | null;
   created_at: string;
 }
 
@@ -203,7 +203,7 @@ export default function TeamPage() {
 
               {/* Project role badge (from the official EUMIND guidelines) */}
               <div className="mt-3">
-                <ProjectRoleBadge projectRoleId={member.project_role} size="sm" />
+                <ProjectRoleBadge projectRoleIds={member.project_role} size="sm" />
               </div>
 
               {isCurrentUser && (

@@ -1,29 +1,38 @@
 "use client";
 
 import * as React from "react";
-import { Check, X, Pencil, Loader2 } from "lucide-react";
+import { Check, X, Pencil, Loader2, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/toast";
 import {
   PROJECT_ROLES,
-  getProjectRole,
+  getProjectRoles,
   PROJECT_ROLE_COLORS,
 } from "@/lib/project-roles";
 import { cn } from "@/lib/utils";
 
+// Normalise whatever the DB returns (string, string[], null) into string[]
+function normalizeRoleIds(value: unknown): string[] {
+  if (!value) return [];
+  if (Array.isArray(value)) return value.filter(Boolean) as string[];
+  if (typeof value === "string") return [value];
+  return [];
+}
+
 interface ProjectRoleBadgeProps {
-  projectRoleId: string | null | undefined;
+  projectRoleIds: string[] | string | null | undefined;
   size?: "sm" | "md" | "lg";
   showIcon?: boolean;
 }
 
 export function ProjectRoleBadge({
-  projectRoleId,
+  projectRoleIds,
   size = "md",
   showIcon = true,
 }: ProjectRoleBadgeProps) {
-  const role = getProjectRole(projectRoleId);
-  if (!role) {
+  const ids = normalizeRoleIds(projectRoleIds);
+  const roles = getProjectRoles(ids);
+  if (roles.length === 0) {
     return (
       <span
         className={cn(
@@ -37,54 +46,63 @@ export function ProjectRoleBadge({
     );
   }
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full font-semibold",
-        PROJECT_ROLE_COLORS[role.id] ?? "bg-slate-100 text-slate-600",
-        size === "sm" ? "px-2 py-0.5 text-[10px]" : "px-2.5 py-1 text-[11px]",
-        size === "lg" && "px-3 py-1.5 text-xs",
-      )}
-      title={role.description}
-    >
-      {showIcon && <span>{role.icon}</span>}
-      {role.shortName}
-    </span>
+    <div className="flex flex-wrap gap-1">
+      {roles.map((role) => (
+        <span
+          key={role.id}
+          className={cn(
+            "inline-flex items-center gap-1 rounded-full font-semibold",
+            PROJECT_ROLE_COLORS[role.id] ?? "bg-slate-100 text-slate-600",
+            size === "sm" ? "px-2 py-0.5 text-[10px]" : "px-2.5 py-1 text-[11px]",
+            size === "lg" && "px-3 py-1.5 text-xs",
+          )}
+          title={role.description}
+        >
+          {showIcon && <span>{role.icon}</span>}
+          {role.shortName}
+        </span>
+      ))}
+    </div>
   );
 }
 
 interface ProjectRoleEditorProps {
   memberId: string;
   memberName: string;
-  currentRoleId: string | null | undefined;
+  currentRoleIds: string[] | string | null | undefined;
   canEdit: boolean; // only leader can edit
-  onUpdated?: (newRoleId: string) => void;
+  onUpdated?: (newRoleIds: string[]) => void;
 }
 
 export function ProjectRoleEditor({
   memberId,
   memberName,
-  currentRoleId,
+  currentRoleIds,
   canEdit,
   onUpdated,
 }: ProjectRoleEditorProps) {
   const { toast } = useToast();
   const supabase = createClient();
   const [editing, setEditing] = React.useState(false);
-  const [selected, setSelected] = React.useState<string | null>(
-    currentRoleId ?? null,
+  const [selected, setSelected] = React.useState<string[]>(() =>
+    normalizeRoleIds(currentRoleIds),
   );
   const [saving, setSaving] = React.useState(false);
 
   React.useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSelected(currentRoleId ?? null);
-  }, [currentRoleId]);
+    setSelected(normalizeRoleIds(currentRoleIds));
+  }, [currentRoleIds]);
+
+  function toggleRole(roleId: string) {
+    setSelected((current) =>
+      current.includes(roleId)
+        ? current.filter((r) => r !== roleId)
+        : [...current, roleId],
+    );
+  }
 
   async function save() {
-    if (selected === currentRoleId) {
-      setEditing(false);
-      return;
-    }
     setSaving(true);
     try {
       const { error } = await supabase
@@ -92,16 +110,20 @@ export function ProjectRoleEditor({
         .update({ project_role: selected })
         .eq("id", memberId);
       if (error) throw error;
+      const count = selected.length;
       toast({
-        title: "Role updated",
-        description: `${memberName}'s project role is now ${getProjectRole(selected)?.name ?? "unset"}.`,
+        title: count === 0 ? "Roles cleared" : "Roles updated",
+        description:
+          count === 0
+            ? `${memberName} has no project roles assigned.`
+            : `${memberName} now has ${count} project role${count > 1 ? "s" : ""}.`,
         variant: "success",
       });
       setEditing(false);
-      if (onUpdated && selected) onUpdated(selected);
+      if (onUpdated) onUpdated(selected);
     } catch {
       toast({
-        title: "Could not update role",
+        title: "Could not update roles",
         description:
           "Make sure the project_role column exists on the profiles table.",
         variant: "error",
@@ -112,25 +134,33 @@ export function ProjectRoleEditor({
   }
 
   function cancel() {
-    setSelected(currentRoleId ?? null);
+    setSelected(normalizeRoleIds(currentRoleIds));
     setEditing(false);
   }
 
   if (!canEdit) {
-    return <ProjectRoleBadge projectRoleId={currentRoleId} size="lg" />;
+    return <ProjectRoleBadge projectRoleIds={currentRoleIds} size="lg" />;
   }
 
   if (!editing) {
+    const ids = normalizeRoleIds(currentRoleIds);
     return (
-      <div className="flex items-center gap-2">
-        <ProjectRoleBadge projectRoleId={currentRoleId} size="lg" />
+      <div className="flex flex-wrap items-center gap-2">
+        <ProjectRoleBadge projectRoleIds={currentRoleIds} size="lg" />
         <button
           onClick={() => setEditing(true)}
-          className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition hover:bg-slate-50 hover:text-slate-700"
-          aria-label="Edit project role"
+          className="inline-flex h-7 items-center gap-1 rounded-lg border border-slate-200 px-2 text-[11px] font-semibold text-slate-500 transition hover:bg-slate-50 hover:text-slate-700"
           type="button"
         >
-          <Pencil className="h-3.5 w-3.5" />
+          {ids.length === 0 ? (
+            <>
+              <Plus className="h-3.5 w-3.5" /> Assign roles
+            </>
+          ) : (
+            <>
+              <Pencil className="h-3.5 w-3.5" /> Edit
+            </>
+          )}
         </button>
       </div>
     );
@@ -138,36 +168,47 @@ export function ProjectRoleEditor({
 
   return (
     <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/50 p-3">
-      <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">
-        Assign {memberName}&apos;s project role
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">
+          Assign {memberName}&apos;s project roles
+        </p>
+        <span className="text-[10px] text-slate-400">
+          {selected.length} selected
+        </span>
+      </div>
+      <p className="text-[10px] leading-4 text-slate-400">
+        A member can hold multiple roles. Tap to toggle.
       </p>
       <div className="grid gap-1.5 sm:grid-cols-2">
-        {PROJECT_ROLES.map((role) => (
-          <button
-            key={role.id}
-            onClick={() => setSelected(role.id)}
-            className={cn(
-              "flex items-start gap-2 rounded-lg border p-2.5 text-left transition",
-              selected === role.id
-                ? "border-teal-400 bg-white ring-2 ring-teal-400/20"
-                : "border-slate-200 bg-white hover:border-slate-300",
-            )}
-            type="button"
-          >
-            <span className="text-base">{role.icon}</span>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-slate-800">
-                {role.name}
-              </p>
-              <p className="text-[10px] leading-4 text-slate-500">
-                {role.description}
-              </p>
-            </div>
-            {selected === role.id && (
-              <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal-600" />
-            )}
-          </button>
-        ))}
+        {PROJECT_ROLES.map((role) => {
+          const isSelected = selected.includes(role.id);
+          return (
+            <button
+              key={role.id}
+              onClick={() => toggleRole(role.id)}
+              className={cn(
+                "flex items-start gap-2 rounded-lg border p-2.5 text-left transition",
+                isSelected
+                  ? "border-teal-400 bg-white ring-2 ring-teal-400/20"
+                  : "border-slate-200 bg-white hover:border-slate-300",
+              )}
+              type="button"
+            >
+              <span className="text-base">{role.icon}</span>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold text-slate-800">
+                  {role.name}
+                </p>
+                <p className="text-[10px] leading-4 text-slate-500">
+                  {role.description}
+                </p>
+              </div>
+              {isSelected && (
+                <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal-600" />
+              )}
+            </button>
+          );
+        })}
       </div>
       <div className="flex justify-end gap-2">
         <button
@@ -188,7 +229,7 @@ export function ProjectRoleEditor({
           ) : (
             <Check className="h-3.5 w-3.5" />
           )}
-          Save role
+          Save {selected.length > 0 && `(${selected.length})`}
         </button>
       </div>
     </div>

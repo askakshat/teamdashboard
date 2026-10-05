@@ -112,6 +112,19 @@ export function getProjectRole(id: string | null | undefined): ProjectRole | nul
   return PROJECT_ROLES.find((r) => r.id === id) ?? null;
 }
 
+/**
+ * Returns all ProjectRole objects for an array of role IDs.
+ * Use this when a member can have multiple roles.
+ */
+export function getProjectRoles(
+  ids: string[] | null | undefined,
+): ProjectRole[] {
+  if (!ids || !Array.isArray(ids) || ids.length === 0) return [];
+  return ids
+    .map((id) => PROJECT_ROLES.find((r) => r.id === id))
+    .filter((r): r is ProjectRole => r !== null);
+}
+
 export const PROJECT_ROLE_COLORS: Record<string, string> = {
   leader: "bg-amber-100 text-amber-800",
   "platform-editor": "bg-sky-100 text-sky-800",

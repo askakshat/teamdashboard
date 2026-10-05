@@ -11,7 +11,7 @@ export interface Profile {
   role: Role;
   group_id?: string | null;
   created_at?: string;
-  project_role?: string | null;
+  project_role?: string[] | null;
 }
 
 /**
