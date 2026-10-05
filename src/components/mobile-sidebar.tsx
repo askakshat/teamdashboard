@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { UserNav } from "@/components/user-nav";
 import { useProfile, useIsLeader } from "@/components/profile-provider";
+import { getDisplayName } from "@/lib/roles";
 
 interface NavItem {
   name: string;
@@ -58,7 +59,7 @@ export function MobileSidebar({
   const pathname = usePathname();
   const profile = useProfile();
   const isLeader = useIsLeader();
-  const displayName = profile?.first_name || "Team Member";
+  const displayName = getDisplayName(profile);
 
   const primaryNavigation: NavItem[] = [
     { name: "Overview", href: "/overview", icon: LayoutDashboard },

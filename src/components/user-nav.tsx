@@ -12,10 +12,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { signOut } from "@/actions/auth";
+import { getDisplayName, getInitials } from "@/lib/roles";
 
 interface UserNavProps {
   user: {
     first_name?: string;
+    display_name?: string | null;
     email?: string;
     role?: string;
   } | null;
@@ -23,9 +25,8 @@ interface UserNavProps {
 
 export function UserNav({ user }: UserNavProps) {
   if (!user) return null;
-  const initials = user.first_name
-    ? user.first_name.charAt(0).toUpperCase()
-    : "T";
+  const displayName = getDisplayName(user);
+  const initials = getInitials(user);
 
   return (
     <DropdownMenu>
@@ -39,7 +40,7 @@ export function UserNav({ user }: UserNavProps) {
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
               <p className="text-sm font-medium leading-none">
-                {user.first_name || "Team Member"}
+                {displayName}
               </p>
               <p className="text-xs leading-none text-muted-foreground">
                 {user.email}

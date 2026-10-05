@@ -23,7 +23,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/toast";
 import { useProfile, useIsLeader } from "@/components/profile-provider";
 import { MILESTONES, DEFAULT_TASKS } from "@/lib/forms-config";
-import { getTaskPermissions } from "@/lib/roles";
+import { getTaskPermissions, getDisplayName } from "@/lib/roles";
 import { TaskComments } from "@/components/task-comments";
 
 interface TaskRow {
@@ -42,6 +42,7 @@ interface TaskRow {
 interface ProfileRow {
   id: string;
   first_name: string;
+  display_name?: string | null;
 }
 
 const columns = [
@@ -102,7 +103,7 @@ export default function TasksPage() {
     setLoading(true);
     const [{ data: tasksData }, { data: profilesData }] = await Promise.all([
       supabase.from("tasks").select("*"),
-      supabase.from("profiles").select("id, first_name"),
+      supabase.from("profiles").select("*"),
     ]);
     setTasks((tasksData ?? []) as TaskRow[]);
     setProfiles((profilesData ?? []) as ProfileRow[]);
@@ -163,7 +164,7 @@ export default function TasksPage() {
       await notifyLeaders(
         "task_review_requested",
         `Review requested: ${task.title}`,
-        `${profile?.first_name ?? "A team member"} submitted this task for your review.`,
+        `${getDisplayName(profile)} submitted this task for your review.`,
         `/tasks`,
       );
     }
@@ -325,7 +326,7 @@ export default function TasksPage() {
           user_id: ownerId,
           type: "task_assigned",
           title: `Task assigned to you: ${task.title}`,
-          body: `${profile?.first_name ?? "Someone"} assigned you a task on the EUMIND dashboard.`,
+          body: `${getDisplayName(profile)} assigned you a task on the EUMIND dashboard.`,
           link: "/tasks",
           read: false,
         });
@@ -374,7 +375,7 @@ export default function TasksPage() {
   const enrichedTasks = useMemo(() => {
     return tasks.map((task) => {
       const ownerProfile = profiles.find((p) => p.id === task.owner_id);
-      const ownerName = ownerProfile?.first_name || "Unassigned";
+      const ownerName = ownerProfile ? getDisplayName(ownerProfile) : "Unassigned";
       const initials =
         ownerName !== "Unassigned"
           ? ownerName.substring(0, 2).toUpperCase()
@@ -512,7 +513,7 @@ export default function TasksPage() {
           <option value="unassigned">Unassigned</option>
           {profiles.map((p) => (
             <option key={p.id} value={p.id}>
-              {p.first_name}
+              {getDisplayName(p)}
             </option>
           ))}
         </select>
