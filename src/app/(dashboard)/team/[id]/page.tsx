@@ -18,7 +18,7 @@ import { useParams } from "next/navigation";
 import { MILESTONES } from "@/lib/forms-config";
 import { ProjectRoleEditor } from "@/components/project-role-editor";
 import { getProjectRoles } from "@/lib/project-roles";
-import { getDisplayName } from "@/lib/roles";
+import { getDisplayName, getInitials } from "@/lib/roles";
 
 interface ProfileRow {
   id: string;
