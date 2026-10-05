@@ -19,7 +19,14 @@ export interface Profile {
  * Priority: display_name → first_name → email prefix → "Team Member"
  */
 export function getDisplayName(
-  profile: Pick<Profile, "display_name" | "first_name" | "email"> | null | undefined,
+  profile:
+    | {
+        display_name?: string | null;
+        first_name?: string | null;
+        email?: string | null;
+      }
+    | null
+    | undefined,
 ): string {
   if (!profile) return "Team Member";
   if (profile.display_name && profile.display_name.trim()) {
@@ -38,7 +45,14 @@ export function getDisplayName(
  * Returns 2-character initials for avatars, using display_name → first_name → email.
  */
 export function getInitials(
-  profile: Pick<Profile, "display_name" | "first_name" | "email"> | null | undefined,
+  profile:
+    | {
+        display_name?: string | null;
+        first_name?: string | null;
+        email?: string | null;
+      }
+    | null
+    | undefined,
 ): string {
   const name = getDisplayName(profile);
   if (name === "Team Member") return "--";

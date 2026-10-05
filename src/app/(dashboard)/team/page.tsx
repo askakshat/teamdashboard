@@ -14,10 +14,12 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { useProfile, useIsLeader } from "@/components/profile-provider";
 import { ProjectRoleBadge } from "@/components/project-role-editor";
+import { getDisplayName, getInitials } from "@/lib/roles";
 
 interface ProfileRow {
   id: string;
   first_name: string;
+  display_name?: string | null;
   email: string;
   role: string;
   project_role: string | null;
@@ -180,12 +182,12 @@ export default function TeamPage() {
                   <div
                     className={`flex h-12 w-12 items-center justify-center rounded-2xl text-base font-bold ${getColorForUser(member.id)}`}
                   >
-                    {member.first_name.substring(0, 2).toUpperCase()}
+                    {getInitials(member)}
                   </div>
                   <div>
                     <div className="flex items-center gap-1.5">
                       <p className="text-sm font-semibold text-slate-900">
-                        {member.first_name}
+                        {getDisplayName(member)}
                       </p>
                       {isMemberLeader && (
                         <Crown className="h-3.5 w-3.5 text-amber-500" />

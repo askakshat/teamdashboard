@@ -18,6 +18,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { MILESTONES } from "@/lib/forms-config";
 import { TeamChat } from "@/components/team-chat";
+import { getDisplayName } from "@/lib/roles";
 
 interface TaskRow {
   id: string;
@@ -40,6 +41,7 @@ interface SubmissionRow {
 interface ProfileRow {
   id: string;
   first_name: string;
+  display_name?: string | null;
 }
 
 const STATUS_FLOW: Record<string, { label: string; color: string }> = {
@@ -75,7 +77,7 @@ export default function OverviewPage() {
     ] = await Promise.all([
       supabase.from("tasks").select("*"),
       supabase.from("form_submissions").select("*"),
-      supabase.from("profiles").select("id, first_name"),
+      supabase.from("profiles").select("*"),
       supabase
         .from("announcements")
         .select("id, title, body, category, created_at")
@@ -434,7 +436,7 @@ export default function OverviewPage() {
                             {task.title}
                           </p>
                           <p className="text-[11px] text-slate-400">
-                            {owner?.first_name ?? "Unassigned"}
+                            {owner ? getDisplayName(owner) : "Unassigned"}
                             {task.due_date && task.due_date !== "TBD" && (
                               <> · due {task.due_date}</>
                             )}

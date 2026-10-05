@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/components/profile-provider";
 import { useToast } from "@/components/toast";
 import { cn } from "@/lib/utils";
+import { getDisplayName, getInitials } from "@/lib/roles";
 
 interface ChatMessage {
   id: string;
@@ -15,7 +16,7 @@ interface ChatMessage {
 }
 
 interface ProfileMap {
-  [id: string]: { first_name: string; role?: string };
+  [id: string]: { first_name: string; display_name?: string | null; role?: string };
 }
 
 function timeAgo(iso: string): string {
@@ -73,13 +74,13 @@ export function TeamChat() {
       if (userIds.length > 0) {
         const { data: profileRows } = await supabase
           .from("profiles")
-          .select("id, first_name, role")
+          .select("*")
           .in("id", userIds);
         if (profileRows) {
           const map: ProfileMap = {};
-          (profileRows as Array<{ id: string; first_name: string; role?: string }>).forEach(
+          (profileRows as Array<{ id: string; first_name: string; display_name?: string | null; role?: string }>).forEach(
             (p) => {
-              map[p.id] = { first_name: p.first_name, role: p.role };
+              map[p.id] = { first_name: p.first_name, display_name: p.display_name, role: p.role };
             },
           );
           setProfiles(map);
@@ -133,7 +134,7 @@ export function TeamChat() {
       if (!profiles[profile.id]) {
         setProfiles((current) => ({
           ...current,
-          [profile.id]: { first_name: profile.first_name, role: profile.role },
+          [profile.id]: { first_name: profile.first_name, display_name: profile.display_name, role: profile.role },
         }));
       }
       setBody("");
@@ -200,8 +201,8 @@ export function TeamChat() {
           <ul className="space-y-3">
             {messages.map((msg) => {
               const author = profiles[msg.user_id];
-              const name = author?.first_name ?? "Member";
-              const initials = name.substring(0, 2).toUpperCase();
+              const name = author ? getDisplayName(author) : "Member";
+              const initials = getInitials(author);
               const isOwn = msg.user_id === profile?.id;
               const isLeader = author?.role === "leader";
               return (

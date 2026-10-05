@@ -796,7 +796,7 @@ export default function TasksPage() {
                                     <option value="">Unassigned</option>
                                     {profiles.map((p) => (
                                       <option key={p.id} value={p.id}>
-                                        {p.first_name}
+                                        {getDisplayName(p)}
                                       </option>
                                     ))}
                                   </select>

@@ -18,10 +18,12 @@ import { useParams } from "next/navigation";
 import { MILESTONES } from "@/lib/forms-config";
 import { ProjectRoleEditor } from "@/components/project-role-editor";
 import { getProjectRole } from "@/lib/project-roles";
+import { getDisplayName, getInitials } from "@/lib/roles";
 
 interface ProfileRow {
   id: string;
   first_name: string;
+  display_name?: string | null;
   email: string;
   role: string;
   project_role: string | null;
@@ -151,12 +153,12 @@ export default function MemberProfilePage() {
           <div
             className={`flex h-20 w-20 items-center justify-center rounded-2xl text-2xl font-bold ${getColorForUser(member.id)}`}
           >
-            {member.first_name.substring(0, 2).toUpperCase()}
+            {getInitials(member)}
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-                {member.first_name}
+                {getDisplayName(member)}
               </h1>
               {isMemberLeader && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-bold text-amber-700">
@@ -192,7 +194,7 @@ export default function MemberProfilePage() {
               </p>
               <ProjectRoleEditor
                 memberId={member.id}
-                memberName={member.first_name}
+                memberName={getDisplayName(member)}
                 currentRoleId={member.project_role}
                 canEdit={isLeader && !isCurrentUser}
                 onUpdated={() => loadData()}

@@ -5,6 +5,7 @@ import { X, Send, MessageSquare, Trash2, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/components/profile-provider";
 import { useToast } from "@/components/toast";
+import { getDisplayName, getInitials } from "@/lib/roles";
 
 interface CommentRow {
   id: string;
@@ -14,7 +15,7 @@ interface CommentRow {
 }
 
 interface ProfileMap {
-  [id: string]: { first_name: string };
+  [id: string]: { first_name: string; display_name?: string | null };
 }
 
 interface TaskCommentsProps {
@@ -75,13 +76,13 @@ export function TaskComments({ taskId, onClose }: TaskCommentsProps) {
       if (userIds.length > 0) {
         const { data: profileRows } = await supabase
           .from("profiles")
-          .select("id, first_name")
+          .select("*")
           .in("id", userIds);
         if (profileRows) {
           const map: ProfileMap = {};
-          (profileRows as Array<{ id: string; first_name: string }>).forEach(
+          (profileRows as Array<{ id: string; first_name: string; display_name?: string | null }>).forEach(
             (p) => {
-              map[p.id] = { first_name: p.first_name };
+              map[p.id] = { first_name: p.first_name, display_name: p.display_name };
             },
           );
           setProfiles(map);
@@ -121,7 +122,7 @@ export function TaskComments({ taskId, onClose }: TaskCommentsProps) {
       if (!profiles[profile.id]) {
         setProfiles((current) => ({
           ...current,
-          [profile.id]: { first_name: profile.first_name },
+          [profile.id]: { first_name: profile.first_name, display_name: profile.display_name },
         }));
       }
     } catch {
@@ -181,8 +182,8 @@ export function TaskComments({ taskId, onClose }: TaskCommentsProps) {
           <ul className="space-y-3">
             {comments.map((c) => {
               const author = profiles[c.user_id];
-              const name = author?.first_name ?? "Member";
-              const initials = name.substring(0, 2).toUpperCase();
+              const name = author ? getDisplayName(author) : "Member";
+              const initials = getInitials(author);
               const isOwn = c.user_id === profile?.id;
               return (
                 <li key={c.id} className="flex gap-2.5">

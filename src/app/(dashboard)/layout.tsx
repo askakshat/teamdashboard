@@ -8,7 +8,7 @@ import { SearchPalette } from "@/components/search-palette";
 import { SearchButton } from "@/components/search-button";
 import { getUserProfile } from "@/actions/auth";
 import { createClient } from "@/lib/supabase/server";
-import { type Profile, getDisplayName } from "@/lib/roles";
+import { type Profile } from "@/lib/roles";
 
 export default async function DashboardLayout({
   children,
@@ -16,7 +16,6 @@ export default async function DashboardLayout({
   children: ReactNode;
 }) {
   const profile = (await getUserProfile()) as Profile | null;
-  const displayName = getDisplayName(profile);
 
   // Fetch counts for the header strip and sidebar badges — these are tiny
   // queries that make the workspace feel alive without slowing down the layout.
