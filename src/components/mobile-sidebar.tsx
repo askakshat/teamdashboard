@@ -24,6 +24,8 @@ import {
   Users,
   Megaphone,
   StickyNote,
+  MessageCircle,
+  Compass,
   type LucideIcon,
 } from "lucide-react";
 import { UserNav } from "@/components/user-nav";
@@ -41,6 +43,7 @@ function isActive(pathname: string, href: string): boolean {
   if (pathname === href) return true;
   if (href === "/forms" && pathname.startsWith("/forms")) return true;
   if (href === "/team" && pathname.startsWith("/team")) return true;
+  if (href === "/messages" && pathname.startsWith("/messages")) return true;
   return false;
 }
 
@@ -72,6 +75,9 @@ export function MobileSidebar({
     { name: "Blueprint studio", href: "/blueprint", icon: Lightbulb },
     { name: "Forms hub", href: "/forms", icon: FileText },
     { name: "Team", href: "/team", icon: Users },
+    { name: "Messages", href: "/messages", icon: MessageCircle },
+    { name: "Project guide", href: "/guide", icon: Compass },
+    { name: "My space", href: "/my-space", icon: StickyNote },
   ];
 
   const workspaceNavigation: NavItem[] = [

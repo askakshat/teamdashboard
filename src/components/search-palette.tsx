@@ -14,6 +14,8 @@ import {
   Settings,
   Megaphone,
   StickyNote,
+  MessageCircle,
+  Compass,
   X,
   CornerDownLeft,
 } from "lucide-react";
@@ -51,6 +53,9 @@ export function SearchPalette() {
       { id: "blueprint", label: "Blueprint studio", hint: "Idea canvas + scratchpad", href: "/blueprint", icon: Lightbulb, group: "Pages" },
       { id: "forms", label: "Forms hub", hint: "All worksheets", href: "/forms", icon: FileText, group: "Pages" },
       { id: "team", label: "Team", hint: "Member directory", href: "/team", icon: Users, group: "Pages" },
+      { id: "messages", label: "Messages", hint: "Private DMs with teammates", href: "/messages", icon: MessageCircle, group: "Pages" },
+      { id: "guide", label: "Project guide", hint: "All 10 phases explained", href: "/guide", icon: Compass, group: "Pages" },
+      { id: "my-space", label: "My space", hint: "Personal private scratchpad", href: "/my-space", icon: StickyNote, group: "Pages" },
       { id: "rules", label: "Project rules", hint: "Privacy & media guardrails", href: "/rules", icon: BookOpen, group: "Pages" },
     ];
     if (isLeader) {
