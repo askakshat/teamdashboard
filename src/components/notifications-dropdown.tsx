@@ -41,6 +41,9 @@ const typeColor: Record<string, string> = {
   announcement: "bg-rose-50 text-rose-600",
   mention: "bg-violet-50 text-violet-600",
   dm: "bg-sky-50 text-sky-600",
+  blueprint_review_requested: "bg-amber-50 text-amber-600",
+  blueprint_approved: "bg-teal-50 text-teal-600",
+  blueprint_rejected: "bg-red-50 text-red-600",
 };
 
 export function NotificationsDropdown() {
