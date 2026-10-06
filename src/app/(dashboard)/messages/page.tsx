@@ -284,10 +284,10 @@ export default function MessagesPage() {
       {tab === "team" ? (
         <TeamChat />
       ) : (
-      <div className="grid gap-4 md:grid-cols-[300px_1fr]">
+      <div className="grid gap-4 lg:grid-cols-[300px_1fr]">
         {/* Conversation list — hidden on mobile when a chat is open */}
-        <div className={`flex flex-col rounded-2xl border border-slate-200/80 bg-white shadow-[0_10px_30px_-22px_rgba(15,23,42,0.25)] ${
-          selectedMember ? "hidden md:flex" : "flex"
+        <div className={`flex-col rounded-2xl border border-slate-200/80 bg-white shadow-[0_10px_30px_-22px_rgba(15,23,42,0.25)] ${
+          selectedMember ? "hidden lg:flex" : "flex"
         }`}>
           <div className="border-b border-slate-100 p-3">
             <div className="relative">
@@ -300,7 +300,7 @@ export default function MessagesPage() {
               />
             </div>
           </div>
-          <div className="max-h-[500px] flex-1 overflow-y-auto p-2">
+          <div className="max-h-[60vh] flex-1 overflow-y-auto p-2 lg:max-h-[500px]">
             {filteredConversations.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <Users className="h-7 w-7 text-slate-300" />
@@ -361,8 +361,8 @@ export default function MessagesPage() {
         </div>
 
         {/* Thread view — hidden on mobile when no chat is selected */}
-        <div className={`flex min-h-[400px] flex-col rounded-2xl border border-slate-200/80 bg-white shadow-[0_10px_30px_-22px_rgba(15,23,42,0.25)] ${
-          !selectedMember ? "hidden md:flex" : "flex"
+        <div className={`min-h-[400px] flex-col rounded-2xl border border-slate-200/80 bg-white shadow-[0_10px_30px_-22px_rgba(15,23,42,0.25)] ${
+          !selectedMember ? "hidden lg:flex" : "flex"
         }`}>
           {!selectedMember ? (
             <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
@@ -380,7 +380,7 @@ export default function MessagesPage() {
               <div className="flex items-center gap-3 border-b border-slate-100 p-4">
                 <button
                   onClick={() => setSelectedMember(null)}
-                  className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 md:hidden"
+                  className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 lg:hidden"
                   type="button"
                   aria-label="Back"
                 >
