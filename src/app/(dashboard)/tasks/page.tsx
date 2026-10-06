@@ -599,7 +599,7 @@ export default function TasksPage() {
           </button>
         </div>
       ) : (
-        <div className="grid gap-4 xl:grid-cols-4">
+        <div className="flex gap-4 overflow-x-auto pb-2 sm:grid sm:grid-cols-2 sm:overflow-visible lg:grid-cols-4">
           {columns.map((column) => {
             const isDoneCol = column.id === "done";
             const memberBlocked = !isLeader && isDoneCol;
@@ -612,7 +612,7 @@ export default function TasksPage() {
                 }}
                 onDragLeave={() => setDragOverCol(null)}
                 onDrop={() => moveTask(column.id)}
-                className={`min-h-[470px] rounded-2xl border p-3 transition ${
+                className={`min-h-[470px] w-[280px] shrink-0 rounded-2xl border p-3 transition sm:w-auto sm:shrink ${
                   column.tone
                 } ${
                   dragOverCol === column.id

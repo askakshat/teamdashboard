@@ -108,11 +108,22 @@ export function TeamChat() {
     return () => clearInterval(interval);
   }, [loadChat]);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom ONLY when new messages arrive (not on every poll)
+  const prevMessageCount = React.useRef(0);
   React.useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    const newCount = messages.length;
+    if (newCount > prevMessageCount.current && scrollRef.current) {
+      // Only scroll if user is already near the bottom (within 150px)
+      const isNearBottom =
+        scrollRef.current.scrollHeight -
+        scrollRef.current.scrollTop -
+        scrollRef.current.clientHeight <
+        150;
+      if (isNearBottom) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }
     }
+    prevMessageCount.current = newCount;
   }, [messages]);
 
   async function send() {

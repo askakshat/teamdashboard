@@ -252,7 +252,7 @@ export default function OverviewPage() {
         </div>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-3 grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <div
             key={stat.label}
@@ -275,7 +275,7 @@ export default function OverviewPage() {
         ))}
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-[1.35fr_0.65fr]">
+      <section className="grid gap-5 lg:grid-cols-[1.35fr_0.65fr]">
         <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_10px_30px_-22px_rgba(15,23,42,0.25)]">
           <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
             <div>
@@ -403,7 +403,7 @@ export default function OverviewPage() {
         </div>
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
+      <section className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="flex min-h-[300px] flex-col rounded-2xl border border-slate-200/80 bg-white shadow-[0_10px_30px_-22px_rgba(15,23,42,0.25)]">
           <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
             <div>

@@ -141,11 +141,21 @@ export default function MessagesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMember, allDms, profile]);
 
-  // Auto-scroll to bottom on new messages
+  // Auto-scroll to bottom ONLY when new messages arrive
+  const prevThreadCount = useRef(0);
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    const newCount = thread.length;
+    if (newCount > prevThreadCount.current && scrollRef.current) {
+      const isNearBottom =
+        scrollRef.current.scrollHeight -
+        scrollRef.current.scrollTop -
+        scrollRef.current.clientHeight <
+        150;
+      if (isNearBottom) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }
     }
+    prevThreadCount.current = newCount;
   }, [thread]);
 
   // Get last message for each member (for the conversation list)
@@ -275,8 +285,10 @@ export default function MessagesPage() {
         <TeamChat />
       ) : (
       <div className="grid gap-4 md:grid-cols-[300px_1fr]">
-        {/* Conversation list */}
-        <div className="flex flex-col rounded-2xl border border-slate-200/80 bg-white shadow-[0_10px_30px_-22px_rgba(15,23,42,0.25)]">
+        {/* Conversation list — hidden on mobile when a chat is open */}
+        <div className={`flex flex-col rounded-2xl border border-slate-200/80 bg-white shadow-[0_10px_30px_-22px_rgba(15,23,42,0.25)] ${
+          selectedMember ? "hidden md:flex" : "flex"
+        }`}>
           <div className="border-b border-slate-100 p-3">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
@@ -284,7 +296,7 @@ export default function MessagesPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search members…"
-                className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50/60 pl-8 pr-3 text-xs text-slate-700 outline-none focus:ring-2 focus:ring-sky-400"
+                className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50/60 pl-8 pr-3 text-xs text-slate-700 outline-none focus:ring-2 focus:ring-sky-400"
               />
             </div>
           </div>
@@ -348,8 +360,10 @@ export default function MessagesPage() {
           </div>
         </div>
 
-        {/* Thread view */}
-        <div className="flex min-h-[400px] flex-col rounded-2xl border border-slate-200/80 bg-white shadow-[0_10px_30px_-22px_rgba(15,23,42,0.25)]">
+        {/* Thread view — hidden on mobile when no chat is selected */}
+        <div className={`flex min-h-[400px] flex-col rounded-2xl border border-slate-200/80 bg-white shadow-[0_10px_30px_-22px_rgba(15,23,42,0.25)] ${
+          !selectedMember ? "hidden md:flex" : "flex"
+        }`}>
           {!selectedMember ? (
             <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
               <MessageCircle className="h-10 w-10 text-slate-300" />
