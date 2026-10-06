@@ -15,6 +15,7 @@ import { useProfile } from "@/components/profile-provider";
 import { useToast } from "@/components/toast";
 import { getDisplayName, getInitials } from "@/lib/roles";
 import { cn } from "@/lib/utils";
+import { TeamChat } from "@/components/team-chat";
 
 interface ProfileRow {
   id: string;
@@ -73,6 +74,7 @@ export default function MessagesPage() {
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [tab, setTab] = useState<"team" | "dms">("dms");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const loadData = useCallback(async () => {
@@ -237,16 +239,41 @@ export default function MessagesPage() {
     <div className="mx-auto max-w-[1100px] space-y-4 pb-10">
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-600">
-          Private conversations
+          Communication hub
         </p>
         <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-slate-950">
           Messages
         </h1>
         <p className="mt-2 text-sm text-slate-500">
-          Send private 1-on-1 messages to any team member. Only you and the recipient can see these messages.
+          Send private 1-on-1 DMs or chat with the whole team. Both sync in real-time.
         </p>
       </div>
 
+      {/* Tab toggle */}
+      <div className="flex items-center gap-1 rounded-xl bg-slate-100 p-1 w-fit">
+        <button
+          onClick={() => setTab("dms")}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+            tab === "dms" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
+          }`}
+          type="button"
+        >
+          <MessageCircle className="mr-2 inline h-4 w-4" /> Direct messages
+        </button>
+        <button
+          onClick={() => setTab("team")}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+            tab === "team" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
+          }`}
+          type="button"
+        >
+          <Users className="mr-2 inline h-4 w-4" /> Team chat
+        </button>
+      </div>
+
+      {tab === "team" ? (
+        <TeamChat />
+      ) : (
       <div className="grid gap-4 md:grid-cols-[300px_1fr]">
         {/* Conversation list */}
         <div className="flex flex-col rounded-2xl border border-slate-200/80 bg-white shadow-[0_10px_30px_-22px_rgba(15,23,42,0.25)]">
@@ -467,6 +494,7 @@ export default function MessagesPage() {
           )}
         </div>
       </div>
+      )}
     </div>
   );
 }

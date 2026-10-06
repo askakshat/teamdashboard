@@ -74,17 +74,23 @@ export default function MySpacePage() {
         })
         .select()
         .single();
-      if (error) throw error;
+      if (error) {
+        throw new Error(error.message);
+      }
       setNotes((current) => [data as NoteRow, ...current]);
       setForm({ title: "", body: "" });
       setShowForm(false);
       toast({ title: "Note saved", variant: "success" });
-    } catch {
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
       toast({
         title: "Could not save note",
-        description: "Make sure the personal_notes table exists.",
+        description: msg.includes("policy")
+          ? "RLS policy blocked the insert. Run the SQL from download/EUMIND_dms_and_personal_notes.sql"
+          : msg,
         variant: "error",
       });
+      console.error("personal_notes insert error:", msg);
     }
   }
 

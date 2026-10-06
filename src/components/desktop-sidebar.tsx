@@ -11,7 +11,6 @@ import {
   Lightbulb,
   FileText,
   Settings,
-  BookOpen,
   Users,
   Megaphone,
   StickyNote,
@@ -74,7 +73,6 @@ export function DesktopSidebar({
   ];
 
   const workspaceNavigation: NavItem[] = [
-    { name: "Project rules", href: "/rules", icon: BookOpen },
     ...(isLeader
       ? [
           {
@@ -160,10 +158,12 @@ export function DesktopSidebar({
             );
           })}
         </ul>
-        <p className="mt-8 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-          {isLeader ? "Manage" : "Resources"}
-        </p>
-        <ul className="mt-3 space-y-1">
+        {workspaceNavigation.length > 0 && (
+          <>
+            <p className="mt-8 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+              {isLeader ? "Manage" : "Resources"}
+            </p>
+            <ul className="mt-3 space-y-1">
           {workspaceNavigation.map((item) => {
             const active = isActive(pathname, item.href);
             return (
@@ -185,7 +185,9 @@ export function DesktopSidebar({
               </li>
             );
           })}
-        </ul>
+            </ul>
+          </>
+        )}
       </nav>
       <div className="border-t border-slate-100 p-4">
         <div className="mb-3 flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2.5">

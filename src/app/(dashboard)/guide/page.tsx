@@ -19,6 +19,8 @@ import {
   Sparkles,
   Clock,
   Award,
+  Shield,
+  EyeOff,
 } from "lucide-react";
 
 interface Phase {
@@ -473,6 +475,66 @@ export default function GuidePage() {
             </div>
           );
         })}
+      </div>
+
+      {/* Rules & compliance section */}
+      <div className="space-y-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-600">
+            Compliance
+          </p>
+          <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-950">
+            Project rules & guardrails
+          </h2>
+          <p className="mt-2 text-sm text-slate-500">
+            Guidelines strictly enforced by the international jury. Follow these to avoid losing points.
+          </p>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          {/* Student privacy */}
+          <div className="rounded-2xl border border-teal-200 bg-teal-50/40 p-5">
+            <div className="flex items-center gap-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-100 text-teal-700">
+                <Shield className="h-4 w-4" />
+              </div>
+              <h3 className="text-sm font-bold text-slate-800">Student privacy</h3>
+            </div>
+            <p className="mt-3 text-xs leading-5 text-slate-600">
+              Strictly <strong>first names only</strong> across all public fields and forms. Never share surnames, phone numbers, home addresses, or personal emails. Your introduction is visible online — only share what you&apos;d want strangers to see.
+            </p>
+          </div>
+
+          {/* Media standards */}
+          <div className="rounded-2xl border border-rose-200 bg-rose-50/40 p-5">
+            <div className="flex items-center gap-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-100 text-rose-700">
+                <Video className="h-4 w-4" />
+              </div>
+              <h3 className="text-sm font-bold text-slate-800">Media standards</h3>
+            </div>
+            <ul className="mt-3 space-y-1.5 text-xs leading-5 text-slate-600">
+              <li>• YouTube videos must be <strong>Unlisted</strong> (not Public or Private)</li>
+              <li>• Video titles must include the word <strong>&quot;Eumind&quot;</strong></li>
+              <li>• Expert interviews: max <strong>4 minutes</strong></li>
+              <li>• Prototype demos: max <strong>3 minutes</strong></li>
+              <li>• Prototype write-up: at least <strong>6 photos</strong></li>
+            </ul>
+          </div>
+
+          {/* Incognito view check */}
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/40 p-5">
+            <div className="flex items-center gap-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-200 text-slate-700">
+                <EyeOff className="h-4 w-4" />
+              </div>
+              <h3 className="text-sm font-bold text-slate-800">Incognito view check</h3>
+            </div>
+            <p className="mt-3 text-xs leading-5 text-slate-600">
+              Your final portfolio will be viewed by international evaluators <strong>without EUMIND login</strong>. Ensure all linked Google Docs, Sheets, or external resources have permissions set to <strong>&quot;Anyone with the link can view&quot;</strong>.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Footer note */}

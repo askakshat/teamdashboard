@@ -24,6 +24,7 @@ import { MILESTONES, DEFAULT_TASKS } from "@/lib/forms-config";
 import { getTaskPermissions, getDisplayName } from "@/lib/roles";
 import { TaskComments } from "@/components/task-comments";
 import { AssigneePicker } from "@/components/assignee-picker";
+import { TaskSubmissionDialog } from "@/components/task-submission-dialog";
 
 interface TaskRow {
   id: string;
@@ -103,6 +104,7 @@ export default function TasksPage() {
   const [showSeedPrompt, setShowSeedPrompt] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [submittingTask, setSubmittingTask] = useState<{ id: string; title: string } | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -841,9 +843,11 @@ export default function TasksPage() {
                         {/* Submit for review button (members only) */}
                         {!isLeader &&
                           task.status === "in_progress" &&
-                          task.owner_id === profile?.id && (
+                          task.assigneeIds.includes(profile?.id ?? "") && (
                             <button
-                              onClick={() => moveTask("review", task.id)}
+                              onClick={() =>
+                                setSubmittingTask({ id: task.id, title: task.title })
+                              }
                               className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-amber-500 py-1.5 text-[10px] font-bold text-white transition hover:bg-amber-600"
                               type="button"
                             >
@@ -891,6 +895,17 @@ export default function TasksPage() {
             : "Click a task card to edit its title and priority. Drag between columns as the idea moves from rough to real."}
         </p>
       </div>
+
+      {/* Task submission dialog */}
+      {submittingTask && (
+        <TaskSubmissionDialog
+          taskId={submittingTask.id}
+          taskTitle={submittingTask.title}
+          open={!!submittingTask}
+          onClose={() => setSubmittingTask(null)}
+          onSubmitted={() => loadData()}
+        />
+      )}
     </div>
   );
 }
