@@ -16,6 +16,7 @@ import {
   StickyNote,
   MessageCircle,
   Compass,
+  BarChart3,
   X,
   CornerDownLeft,
 } from "lucide-react";
@@ -55,6 +56,7 @@ export function SearchPalette() {
       { id: "team", label: "Team", hint: "Member directory", href: "/team", icon: Users, group: "Pages" },
       { id: "messages", label: "Messages", hint: "Private DMs with teammates", href: "/messages", icon: MessageCircle, group: "Pages" },
       { id: "guide", label: "Project guide", hint: "All 10 phases explained", href: "/guide", icon: Compass, group: "Pages" },
+      { id: "polls", label: "Quick polls", hint: "Team decision making", href: "/polls", icon: BarChart3, group: "Pages" },
       { id: "my-space", label: "My space", hint: "Personal private scratchpad", href: "/my-space", icon: StickyNote, group: "Pages" },
       { id: "rules", label: "Project rules", hint: "Privacy & media guardrails", href: "/rules", icon: BookOpen, group: "Pages" },
     ];
